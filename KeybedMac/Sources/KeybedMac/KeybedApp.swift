@@ -151,7 +151,7 @@ final class KeybedApp: NSObject, NSApplicationDelegate, NSWindowDelegate {
                           self.presetIndex == index, self.hud.view.preset.id == card.preset.id,
                           self.soundItems[index].state == .on,
                           self.typing.snapshot.count == previousCount else {
-                        fputs("Keybed: scrolling, sound selection or preview counter check failed for \(card.preset.name).\n", stderr)
+                        fputs("Keybed: scrolling/selection check failed for \(card.preset.name): card=\(card.frame), visible=\(self.libraryScroll.contentView.documentVisibleRect), insets=\(self.libraryScroll.contentInsets), selected=\(self.presetIndex), HUD=\(self.hud.view.preset.id), menu=\(self.soundItems[index].state.rawValue), count=\(self.typing.snapshot.count), expectedCount=\(previousCount).\n", stderr)
                         exit(1)
                     }
                 }
