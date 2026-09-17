@@ -68,6 +68,9 @@ func (s *studio) tickHUD(now time.Time) {
 		return
 	}
 	count, last := s.counter.activity(now)
+	if s.hudCount != count && s.count != 0 {
+		setText(s.count, fmt.Sprintf("%d", count))
+	}
 	age := now.Sub(last)
 	if s.previewTime.After(last) {
 		age = now.Sub(s.previewTime)
@@ -117,46 +120,53 @@ func (s *studio) hudProcedure(window, message, wparam, lparam uintptr) uintptr {
 		return 3 // MA_NOACTIVATE
 	case 0x14:
 		return 1
+	case 0x318:
+		s.drawHUD(window, wparam)
+		return 0
 	case 0xf:
 		var paint paintInfo
 		dc, _, _ := beginPaint.Call(window, uintptr(unsafe.Pointer(&paint)))
-		r := clientRect(window)
-		fill(dc, r, 0x030201)
-		r.left += int32(s.hp(2))
-		r.top += int32(s.hp(2))
-		r.right -= int32(s.hp(2))
-		r.bottom -= int32(s.hp(2))
-		accent := presetColor(s.settings.Preset)
-		rounded(dc, r, s.hp(30), s.hp(1), rgb(.075, .085, .105), accent)
-		height := int(float64(r.bottom) / s.hudScale)
-		if height > 40 {
-			s.hudText(dc, fmt.Sprintf("%d keys", s.hudCount), s.hudRect(57, 10, 152, 24), 1, studioText)
-		}
-		y := 36
-		if height <= 40 {
-			y = 10
-		}
-		label := presetNames[s.settings.Preset]
-		if s.settings.Muted {
-			label = "Muted · " + label
-		}
-		s.hudText(dc, label, s.hudRect(57, y, 152, 18), 0, accent)
-		age := time.Since(s.hudLast)
-		if s.previewTime.After(s.hudLast) {
-			age = time.Since(s.previewTime)
-		}
-		pulse := 0.0
-		if !s.reduceMotion && age >= 0 && age < 800*time.Millisecond {
-			pulse = math.Exp(-age.Seconds() * 8)
-		}
-		center := height / 2
-		for index := 0; index < 5; index++ {
-			bar := 5 + int(pulse*(9+math.Abs(math.Sin(float64(index)*1.4+float64(time.Now().UnixMilli())/100))*11))
-			fill(dc, s.hudRect(19+index*4, center-bar/2, 2, bar), accent)
-		}
+		s.drawHUD(window, dc)
 		endPaint.Call(window, uintptr(unsafe.Pointer(&paint)))
 		return 0
 	}
 	result, _, _ := defWindowProc.Call(window, message, wparam, lparam)
 	return result
+}
+
+func (s *studio) drawHUD(window, dc uintptr) {
+	r := clientRect(window)
+	fill(dc, r, 0x030201)
+	r.left += int32(s.hp(2))
+	r.top += int32(s.hp(2))
+	r.right -= int32(s.hp(2))
+	r.bottom -= int32(s.hp(2))
+	accent := presetColor(s.settings.Preset)
+	rounded(dc, r, s.hp(30), s.hp(1), rgb(.075, .085, .105), accent)
+	height := int(float64(r.bottom) / s.hudScale)
+	if height > 40 {
+		s.hudText(dc, fmt.Sprintf("%d keys", s.hudCount), s.hudRect(57, 10, 152, 24), 1, studioText)
+	}
+	y := 36
+	if height <= 40 {
+		y = 10
+	}
+	label := presetNames[s.settings.Preset]
+	if s.settings.Muted {
+		label = "Muted · " + label
+	}
+	s.hudText(dc, label, s.hudRect(57, y, 152, 18), 0, accent)
+	age := time.Since(s.hudLast)
+	if s.previewTime.After(s.hudLast) {
+		age = time.Since(s.previewTime)
+	}
+	pulse := 0.0
+	if !s.reduceMotion && age >= 0 && age < 800*time.Millisecond {
+		pulse = math.Exp(-age.Seconds() * 8)
+	}
+	center := height / 2
+	for index := 0; index < 5; index++ {
+		bar := 5 + int(pulse*(9+math.Abs(math.Sin(float64(index)*1.4+float64(time.Now().UnixMilli())/100))*11))
+		fill(dc, s.hudRect(19+index*4, center-bar/2, 2, bar), accent)
+	}
 }

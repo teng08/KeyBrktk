@@ -134,7 +134,7 @@ jobs:
         uses: actions/upload-artifact@v7
         with:
           name: UI-Windows-${{ matrix.label }}
-          path: dist/windows-${{ matrix.label }}-studio.png
+          path: dist/windows-${{ matrix.label }}-studio*.png
           if-no-files-found: error
       - uses: actions/upload-artifact@v7
         with:

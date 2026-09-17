@@ -4,6 +4,9 @@ package main
 
 import (
 	"fmt"
+	"path/filepath"
+	"strings"
+	"syscall"
 	"time"
 	"unsafe"
 )
@@ -159,6 +162,21 @@ func (s *studio) checkStudio() error {
 	s.libraryScroll = 0
 	s.layoutStudio()
 	registered := s.trayAvailable
+	fontDC, _, _ := gdi32.NewProc("CreateCompatibleDC").Call(0)
+	if fontDC == 0 {
+		return fmt.Errorf("create font validation context")
+	}
+	for _, font := range s.fonts {
+		oldFont, _, _ := selectObject.Call(fontDC, font)
+		var face [128]uint16
+		got, _, _ := gdi32.NewProc("GetTextFaceW").Call(fontDC, 128, uintptr(unsafe.Pointer(&face[0])))
+		selectObject.Call(fontDC, oldFont)
+		if got == 0 || syscall.UTF16ToString(face[:]) != "Segoe UI" {
+			gdi32.NewProc("DeleteDC").Call(fontDC)
+			return fmt.Errorf("studio font not Segoe UI: %s", syscall.UTF16ToString(face[:]))
+		}
+	}
+	gdi32.NewProc("DeleteDC").Call(fontDC)
 	sendMessage.Call(s.window, 0x10, 0, 0)
 	s.counter.record(time.Now())
 	s.tickHUD(time.Now())
@@ -207,6 +225,17 @@ func (s *studio) checkStudio() error {
 	if s.screenshotPath != "" {
 		if err := captureStudio(s.window, s.screenshotPath); err != nil {
 			return err
+		}
+		base := strings.TrimSuffix(s.screenshotPath, filepath.Ext(s.screenshotPath))
+		if err := captureStudio(s.hud, base+"-hud.png"); err != nil {
+			return err
+		}
+		if s.rootScroll == 0 && int(clientRect(s.window).bottom) < s.px(studioHeight) {
+			s.rootScroll = s.px(studioHeight)
+			s.layoutStudio()
+			if err := captureStudio(s.window, base+"-footer.png"); err != nil {
+				return err
+			}
 		}
 	}
 	return nil

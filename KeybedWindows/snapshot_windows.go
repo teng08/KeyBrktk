@@ -62,14 +62,14 @@ func captureStudio(window uintptr, path string) error {
 		if data[offset] < 70 && data[offset+1] < 70 && data[offset+2] < 70 {
 			dark++
 		}
-		if data[offset] == 24 && data[offset+1] == 19 && data[offset+2] == 17 {
+		if data[offset] == 24 && data[offset+1] == 19 && data[offset+2] == 17 || data[offset] == 27 && data[offset+1] == 22 && data[offset+2] == 19 {
 			background++
 		}
 		if data[offset] > 180 && data[offset+1] > 180 && data[offset+2] > 180 {
 			textPixels++
 		}
 	}
-	if dark < width*height/2 || background < width*height/15 || textPixels < 100 {
+	if dark < width*height/2 || background < width*height/15 || textPixels < max(20, min(100, width*height/1000)) {
 		return fmt.Errorf("studio snapshot did not render the dark UI")
 	}
 	if err := os.MkdirAll(filepath.Dir(path), 0755); err != nil {

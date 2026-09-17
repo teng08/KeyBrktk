@@ -127,6 +127,11 @@ func (s *studio) setFonts() error {
 	for _, control := range s.controls {
 		sendMessage.Call(control.window, 0x30, s.fonts[control.font], 1)
 	}
+	for _, card := range s.cards {
+		if card != 0 {
+			sendMessage.Call(card, 0x30, s.fonts[1], 1)
+		}
+	}
 	for _, font := range old {
 		if font != 0 {
 			deleteObject.Call(font)
@@ -403,10 +408,20 @@ func (s *studio) refreshControls() {
 		}
 		sendMessage.Call(handle, 0xf1, value, 0)
 	}
-	for _, card := range s.cards {
+	for index, card := range s.cards {
+		name := presetNames[index] + ". " + presetLooks[index].detail
+		if index == s.settings.Preset {
+			name += ". Selected"
+		}
+		setText(card, name)
 		repaint(card)
 	}
-	for _, mode := range s.modes {
+	for index, mode := range s.modes {
+		name := intensityNames[index]
+		if index == s.settings.Intensity {
+			name += " (selected)"
+		}
+		setText(mode, name)
 		repaint(mode)
 	}
 	repaint(s.selectedSound)
