@@ -1,0 +1,7 @@
+# Preserve the pinned upstream license and manifest in Windows checkouts.
+Sounds/Mechanical/LICENSE text eol=lf
+Sounds/Mechanical/SOURCES.json text eol=lf
+
+# Never apply text/line-ending filters to recorded audio.
+*.mp3 binary
+*.wav binary
