@@ -42,6 +42,7 @@ type studioUI struct {
 	hudCollapse                                   float64
 	hudScale                                      float64
 	hudFonts                                      [2]uintptr
+	reduceMotion                                  bool
 	screenshotPath                                string
 }
 
@@ -462,6 +463,9 @@ func (s *studio) libraryProcedure(window, message, wparam, lparam uintptr) uintp
 
 func (s *studio) uiMessage(window, message, wparam, lparam uintptr) (uintptr, bool) {
 	switch message {
+	case 0x1a:
+		s.updateMotionPreference()
+		return 0, false
 	case 0x05:
 		s.layoutStudio()
 		return 0, false

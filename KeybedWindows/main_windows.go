@@ -71,6 +71,33 @@ func (s *studio) menu() {
 	}
 	defer destroyMenu.Call(menu)
 	appendMenu.Call(menu, 0, idShow, uintptr(unsafe.Pointer(wide("Show Keybed"))))
+	appendMenu.Call(menu, 3, 0, uintptr(unsafe.Pointer(wide(fmt.Sprintf("%d keys · 3-second window", s.counter.snapshot(time.Now()))))))
+	appendMenu.Call(menu, 0x800, 0, 0)
+	library, _, _ := createPopupMenu.Call()
+	if library != 0 {
+		for index, name := range presetNames {
+			flags := uintptr(0)
+			if index == s.settings.Preset {
+				flags = 8
+			}
+			appendMenu.Call(library, flags, idCardBase+uintptr(index), uintptr(unsafe.Pointer(wide(name))))
+		}
+		appendMenu.Call(menu, 0x10, library, uintptr(unsafe.Pointer(wide("Sound"))))
+	}
+	for index, name := range intensityNames {
+		flags := uintptr(0)
+		if index == s.settings.Intensity {
+			flags = 8
+		}
+		appendMenu.Call(menu, flags, idModeBase+uintptr(index), uintptr(unsafe.Pointer(wide(name))))
+	}
+	appendMenu.Call(menu, 0x800, 0, 0)
+	flags := uintptr(0)
+	if s.settings.Overlay {
+		flags = 8
+	}
+	appendMenu.Call(menu, flags, idOverlay, uintptr(unsafe.Pointer(wide("Floating cursor counter"))))
+	appendMenu.Call(menu, 0, idReset, uintptr(unsafe.Pointer(wide("Reset typing count"))))
 	label := "Mute"
 	if s.settings.Muted {
 		label = "Unmute"
@@ -137,8 +164,12 @@ func (s *studio) procedure(window, message, wparam, lparam uintptr) uintptr {
 			s.settings.Releases = value == 1
 			s.apply()
 		case idOverlay:
-			checked, _, _ := sendMessage.Call(s.overlay, 0xf0, 0, 0)
-			s.settings.Overlay = checked == 1
+			if lparam == 0 {
+				s.settings.Overlay = !s.settings.Overlay
+			} else {
+				checked, _, _ := sendMessage.Call(s.overlay, 0xf0, 0, 0)
+				s.settings.Overlay = checked == 1
+			}
 			s.apply()
 		case idReset:
 			s.counter.reset()
@@ -150,6 +181,7 @@ func (s *studio) procedure(window, message, wparam, lparam uintptr) uintptr {
 			if !s.smoke {
 				if err := setLoginEnabled(checked == 1); err != nil {
 					setText(s.status, err.Error())
+					showError(err.Error())
 				} else {
 					s.startupEnabled = loginEnabled()
 				}

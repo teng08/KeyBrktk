@@ -31,7 +31,8 @@ dedicated Space/Enter/Backspace and release samples. Original preset indices are
 preserved so settings from the earlier release still select the same sound.
 
 Closing the studio hides it and leaves keyboard sounds running. Double-click the
-notification-area icon to reopen it, or right-click the icon to mute, preview or
+notification-area icon to reopen it, or right-click the icon to choose sounds,
+intensity, floating-counter visibility, reset, mute, preview or
 quit. Use **Quit Keybed** to stop the app. Only one instance runs at a time.
 If Explorer/the notification area is unavailable, closing the studio minimizes
 it rather than hiding it, and the app retries tray registration. It never leaves
@@ -53,7 +54,8 @@ Enable **Floating counter follows my mouse** for the same small dark counter as
 on Mac. It shows the current sound, counts key-down events including repeats,
 resets its typing window every three seconds, and collapses after an idle pause.
 It is click-through, never takes focus and stays within the cursor's monitor work
-area. Closing/minimizing the studio does not stop the overlay or sounds. Mute
+area. Windows' animation preference disables pulsing and animated collapse.
+Closing/minimizing the studio does not stop the overlay or sounds. Mute
 still counts; previews and releases do not. **Reset count** clears the counter.
 Overlay visibility is saved with the other settings.
 

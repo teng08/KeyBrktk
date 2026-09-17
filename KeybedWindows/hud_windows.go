@@ -13,6 +13,7 @@ import (
 // A layered, non-activating tool window never steals focus or mouse clicks.
 func (s *studio) createHUD(module, cursor uintptr) error {
 	s.hudScale = s.scale
+	s.updateMotionPreference()
 	class := windowClass{procedure: syscall.NewCallback(s.hudProcedure), instance: module, cursor: cursor, className: wide("Keybed.CursorCounter")}
 	result, _, err := registerClass.Call(uintptr(unsafe.Pointer(&class)))
 	if result == 0 {
@@ -31,6 +32,12 @@ func (s *studio) hp(value int) int { return int(math.Round(float64(value) * s.hu
 func (s *studio) hudRect(x, y, w, h int) nativeRect {
 	return nativeRect{int32(s.hp(x)), int32(s.hp(y)), int32(s.hp(x + w)), int32(s.hp(y + h))}
 }
+func (s *studio) updateMotionPreference() {
+	animations := int32(1)
+	result, _, _ := user32.NewProc("SystemParametersInfoW").Call(0x1042, 0, uintptr(unsafe.Pointer(&animations)), 0)
+	s.reduceMotion = result != 0 && animations == 0
+}
+
 func (s *studio) setHUDFonts() error {
 	for index, size := range [...]int{11, 16} {
 		weight := 400
@@ -69,7 +76,11 @@ func (s *studio) tickHUD(now time.Time) {
 	if last.IsZero() && s.previewTime.IsZero() || age >= 3*time.Second {
 		target = 1
 	}
-	s.hudCollapse += (target - s.hudCollapse) * .28
+	if s.reduceMotion {
+		s.hudCollapse = target
+	} else {
+		s.hudCollapse += (target - s.hudCollapse) * .28
+	}
 	if math.Abs(target-s.hudCollapse) < .002 {
 		s.hudCollapse = target
 	}
@@ -135,7 +146,7 @@ func (s *studio) hudProcedure(window, message, wparam, lparam uintptr) uintptr {
 			age = time.Since(s.previewTime)
 		}
 		pulse := 0.0
-		if age >= 0 && age < 800*time.Millisecond {
+		if !s.reduceMotion && age >= 0 && age < 800*time.Millisecond {
 			pulse = math.Exp(-age.Seconds() * 8)
 		}
 		center := height / 2

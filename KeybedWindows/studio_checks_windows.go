@@ -62,13 +62,21 @@ func (s *studio) checkStudio() error {
 		return fmt.Errorf("mute did not configure audio")
 	}
 	// Overlay disabled/enabled, real activity, idle collapse, reset, no activation.
-	s.settings.Overlay = false
-	s.refreshControls()
+	if !s.settings.Overlay {
+		s.settings.Overlay = true
+		s.refreshControls()
+	}
+	sendMessage.Call(s.overlay, 0xf5, 0, 0)
+	if s.settings.Overlay {
+		return fmt.Errorf("overlay checkbox did not disable counter")
+	}
 	if visible, _, _ := isWindowVisible.Call(s.hud); visible != 0 {
 		return fmt.Errorf("overlay off did not hide counter")
 	}
-	s.settings.Overlay = true
-	s.refreshControls()
+	sendMessage.Call(s.overlay, 0xf5, 0, 0)
+	if !s.settings.Overlay {
+		return fmt.Errorf("overlay checkbox did not enable counter")
+	}
 	s.counter.reset()
 	s.previewTime = time.Time{}
 	now := time.Now()
@@ -87,6 +95,20 @@ func (s *studio) checkStudio() error {
 	if s.hudCount != 0 || s.hudHeight > 37 {
 		return fmt.Errorf("idle HUD did not reset and collapse")
 	}
+	previousMotion := s.reduceMotion
+	s.reduceMotion = true
+	s.counter.record(time.Now())
+	s.tickHUD(time.Now())
+	if s.hudHeight != 66 {
+		return fmt.Errorf("reduced-motion counter did not expand immediately")
+	}
+	s.previewTime = time.Time{}
+	s.counter.reset()
+	s.tickHUD(time.Now())
+	if s.hudHeight != 36 {
+		return fmt.Errorf("reduced-motion counter did not collapse immediately")
+	}
+	s.reduceMotion = previousMotion
 	if after, _, _ := getFocus.Call(); after != focus {
 		return fmt.Errorf("HUD stole keyboard focus")
 	}
@@ -138,6 +160,11 @@ func (s *studio) checkStudio() error {
 	s.layoutStudio()
 	registered := s.trayAvailable
 	sendMessage.Call(s.window, 0x10, 0, 0)
+	s.counter.record(time.Now())
+	s.tickHUD(time.Now())
+	if visible, _, _ := isWindowVisible.Call(s.hud); visible == 0 || s.hudCount != 1 {
+		return fmt.Errorf("closing studio stopped background floating counter")
+	}
 	if registered {
 		if visible, _, _ := isWindowVisible.Call(s.window); visible != 0 {
 			return fmt.Errorf("close did not hide studio")
@@ -156,6 +183,10 @@ func (s *studio) checkStudio() error {
 	s.trayAvailable = registered
 	if minimized, _, _ := isIconic.Call(s.window); minimized == 0 {
 		return fmt.Errorf("no-tray fallback did not minimize")
+	}
+	s.tickHUD(time.Now())
+	if visible, _, _ := isWindowVisible.Call(s.hud); visible == 0 {
+		return fmt.Errorf("minimizing studio stopped background floating counter")
 	}
 	s.show()
 	if minimized, _, _ := isIconic.Call(s.window); minimized != 0 {
