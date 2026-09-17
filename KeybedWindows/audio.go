@@ -35,7 +35,7 @@ func readBank(reader io.Reader) (*soundBank, error) {
 	}
 	for i, want := range []uint32{sampleRate, uint32(len(presetNames)), uint32(len(intensityNames)), 12} {
 		if binary.LittleEndian.Uint32(data[8+i*4:12+i*4]) != want {
-			return nil, fmt.Errorf("sound bank does not match this release (expected %d presets); extract the executable and sound bank from the same ZIP", len(presetNames))
+			return nil, fmt.Errorf("sound bank does not match this release (expected %d presets); use a bank from the same release", len(presetNames))
 		}
 	}
 	bank := new(soundBank)
@@ -72,7 +72,7 @@ func readBank(reader io.Reader) (*soundBank, error) {
 func loadBank(path string) (*soundBank, error) {
 	file, err := os.Open(path)
 	if err != nil {
-		return nil, fmt.Errorf("open %s: %w; extract the entire download before opening Keybed.exe", path, err)
+		return nil, fmt.Errorf("open %s: %w; source builds need a sound bank, while release executables include it", path, err)
 	}
 	defer file.Close()
 	return readBank(file)

@@ -1,0 +1,28 @@
+KEYBED FOR MAC — INSTALLATION
+
+1. Open Keybed-macOS-universal.dmg.
+2. Drag Keybed.app onto the Applications shortcut in this window.
+   If updating, quit the old Keybed first, then replace the old Applications copy.
+3. Eject the Keybed disk image and open Keybed from Applications.
+4. In System Settings > Privacy & Security > Input Monitoring, enable Keybed.
+   On macOS Monterey: System Preferences > Security & Privacy > Privacy.
+   Use + to add the final Applications copy if necessary. Quit/reopen when asked.
+5. Choose a sound in Sound Studio. Preview sound works before keyboard permission.
+
+Works natively on Intel and Apple-silicon Macs with macOS 11 or newer.
+All 13 presets and 468 prepared sounds are included and work offline.
+No Go, Terminal, developer tools, or additional sound downloads are needed.
+
+This preview is locally signed, not Developer ID signed or notarized.
+macOS may show an unknown-developer warning. If you trust the file downloaded
+from https://github.com/teng08/KeyBrktk/releases, the system's Privacy & Security
+page may offer Open Anyway. Do not disable macOS security protections.
+
+Closing the studio keeps sounds running. Reopen it from the keyboard menu-bar
+icon. Use Quit Keybed to stop. Automatic login startup is optional in the app.
+Sound credits and full license notices are included inside Keybed.app.
+
+On your device, test typing in another app, Space/Enter/Delete, all presets,
+mute, release sounds, the floating counter, and closing/reopening the studio.
+Audio latency and keyboard availability depend on your hardware and permissions.
+Bluetooth audio adds latency. Automated checks cannot verify every physical device.

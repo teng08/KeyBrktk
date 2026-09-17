@@ -15,6 +15,30 @@ func (s *studio) checkStudio() error {
 	if s.smokeError != nil {
 		return s.smokeError
 	}
+	sendMessage.Call(s.window, 0x111, idCredits, 0)
+	if s.creditsWindow == 0 || s.creditsEdit == 0 {
+		return fmt.Errorf("credits window did not open")
+	}
+	length, _, _ := user32.NewProc("GetWindowTextLengthW").Call(s.creditsEdit)
+	buffer := make([]uint16, int(length)+1)
+	user32.NewProc("GetWindowTextW").Call(s.creditsEdit, uintptr(unsafe.Pointer(&buffer[0])), uintptr(len(buffer)))
+	got := strings.ReplaceAll(syscall.UTF16ToString(buffer), "\r\n", "\n")
+	want := strings.ReplaceAll(appCredits(), "\r\n", "\n")
+	if got != want {
+		return fmt.Errorf("credits viewer omitted or changed a bundled notice")
+	}
+	// Check both resize and close using the real native message routing.
+	moveWindow.Call(s.creditsWindow, 0, 0, 500, 320, 1)
+	viewer := clientRect(s.creditsWindow)
+	var text nativeRect
+	getWindowRect.Call(s.creditsEdit, uintptr(unsafe.Pointer(&text)))
+	if viewer.right != text.right-text.left || viewer.bottom != text.bottom-text.top {
+		return fmt.Errorf("credits viewer did not resize its text")
+	}
+	sendMessage.Call(s.creditsWindow, 0x10, 0, 0)
+	if s.creditsWindow != 0 || s.creditsEdit != 0 {
+		return fmt.Errorf("credits viewer did not close independently")
+	}
 	if s.tryFallback {
 		setFocus.Call(s.tryField)
 		if length, _, _ := user32.NewProc("GetWindowTextLengthW").Call(s.tryField); length != 0 || s.tryPlaceholder {

@@ -28,6 +28,8 @@ type placedControl struct {
 type studioUI struct {
 	library, overlay, startup, selectedSound, hud uintptr
 	tryField                                      uintptr
+	creditsWindow, creditsEdit                    uintptr
+	creditsRegistered                             bool
 	tryFallback, tryPlaceholder                   bool
 	cards                                         [len(presetNames)]uintptr
 	modes                                         [len(intensityNames)]uintptr
@@ -133,6 +135,9 @@ func (s *studio) setFonts() error {
 		if card != 0 {
 			sendMessage.Call(card, 0x30, s.fonts[1], 1)
 		}
+	}
+	if s.creditsEdit != 0 {
+		sendMessage.Call(s.creditsEdit, 0x30, s.fonts[0], 1)
 	}
 	for _, font := range old {
 		if font != 0 {
@@ -292,6 +297,7 @@ func (s *studio) createStudioUI() error {
 		{"Reset count", layoutRect{618, 539, 114, 28}, idReset, false, nil},
 		{"▶  Preview sound", layoutRect{28, 651, 146, 30}, idPreview, false, nil},
 		{"Mute", layoutRect{179, 651, 89, 30}, idMute, false, &s.mute},
+		{"Credits", layoutRect{273, 651, 89, 30}, idCredits, false, nil},
 		{"Quit Keybed", layoutRect{618, 651, 114, 30}, idQuit, false, nil},
 	}
 	for _, button := range buttons {
@@ -604,6 +610,8 @@ func (s *studio) drawControl(item *drawItem) {
 			text = "Reset count"
 		case idQuit:
 			text = "Quit Keybed"
+		case idCredits:
+			text = "Credits"
 		}
 		if id >= idModeBase && id < idModeBase+len(intensityNames) {
 			text = intensityNames[id-idModeBase]
@@ -621,6 +629,9 @@ func (s *studio) drawControl(item *drawItem) {
 }
 
 func (s *studio) disposeUI() {
+	if s.creditsWindow != 0 {
+		destroyWindow.Call(s.creditsWindow)
+	}
 	if s.hud != 0 {
 		destroyWindow.Call(s.hud)
 		s.hud = 0

@@ -63,13 +63,15 @@ jobs:
         run: go test ./...
       - name: Package universal app
         if: matrix.runner == 'macos-26'
-        run: ditto -c -k --sequesterRsrc --keepParent "$KEYBED_APP_OUTPUT" dist/Keybed-macOS-universal.zip
+        run: ./KeybedMac/package-app.sh
       - name: Upload macOS download
         if: matrix.runner == 'macos-26'
         uses: actions/upload-artifact@v7
         with:
           name: Keybed-macOS-universal
-          path: dist/Keybed-macOS-universal.zip
+          path: |
+            dist/Keybed-macOS-universal.dmg
+            dist/Keybed-macOS-universal.zip
           if-no-files-found: error
       - name: Upload shared sound bank
         if: matrix.runner == 'macos-26'
@@ -119,14 +121,35 @@ jobs:
           if ($LASTEXITCODE -ne 0) { throw "Windows vet failed" }
       - name: Build and package standalone executable
         run: ./KeybedWindows/build.ps1 -Architecture '${{ matrix.arch }}'
-      - name: Verify packaged samples through production mixer
+      - name: Test embedded production bank and full license notices
+        working-directory: KeybedWindows
+        env:
+          KEYBED_SOUND_BANK: ${{ github.workspace }}/dist/common/Keybed.soundbank
         run: |
-          $app = Join-Path $PWD 'dist/windows-${{ matrix.label }}/Keybed.exe'
+          go test -tags bundled ./...
+          if ($LASTEXITCODE -ne 0) { throw "Embedded distribution tests failed" }
+          go vet -tags bundled -unsafeptr=false ./...
+          if ($LASTEXITCODE -ne 0) { throw "Embedded distribution vet failed" }
+      - name: Verify single-file download alone in an empty folder
+        run: |
+          $solo = Join-Path $env:RUNNER_TEMP 'keybed-single-file-${{ matrix.label }}'
+          if (Test-Path -LiteralPath $solo) { throw "Standalone test folder must not already exist" }
+          New-Item -ItemType Directory -Path $solo | Out-Null
+          $app = Join-Path $solo 'Keybed.exe'
+          Copy-Item -LiteralPath 'dist/Keybed-Windows-${{ matrix.label }}.exe' -Destination $app
+          if (@(Get-ChildItem -LiteralPath $solo -Force).Count -ne 1) { throw "Standalone test is not isolated" }
+          $env:KEYBED_SINGLE_FILE_APP = $app
+          "KEYBED_SINGLE_FILE_APP=$app" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
           $process = Start-Process -FilePath $app -ArgumentList '--self-test' -Wait -PassThru -NoNewWindow
           if ($process.ExitCode -ne 0) { throw "Packaged Windows sound check failed: $($process.ExitCode)" }
+          $credits = Join-Path $env:RUNNER_TEMP 'keybed-credits-${{ matrix.label }}.txt'
+          $process = Start-Process -FilePath $app -ArgumentList '--credits' -Wait -PassThru -NoNewWindow -RedirectStandardOutput $credits
+          if ($process.ExitCode -ne 0) { throw "Standalone credits export failed" }
+          $text = Get-Content -LiteralPath $credits -Raw
+          if ($text -notmatch 'Thomas Lai' -or $text -notmatch 'Permission is hereby granted') { throw "Standalone app omitted license notices" }
       - name: Smoke-test matching studio, scrolling, DPI, floating counter and background lifecycle
         run: |
-          $app = Join-Path $PWD 'dist/windows-${{ matrix.label }}/Keybed.exe'
+          $app = $env:KEYBED_SINGLE_FILE_APP
           $process = Start-Process -FilePath $app -ArgumentList ${{ matrix.smoke_args }} -PassThru -NoNewWindow
           if (-not $process.WaitForExit(30000)) { $process.Kill(); throw "Windows smoke test timed out" }
           if ($process.ExitCode -ne 0) { throw "Windows smoke test failed: $($process.ExitCode)" }
@@ -139,7 +162,9 @@ jobs:
       - uses: actions/upload-artifact@v7
         with:
           name: Keybed-Windows-${{ matrix.label }}
-          path: dist/Keybed-Windows-${{ matrix.label }}.zip
+          path: |
+            dist/Keybed-Windows-${{ matrix.label }}.exe
+            dist/Keybed-Windows-${{ matrix.label }}.zip
           if-no-files-found: error
 
   release:
@@ -160,15 +185,18 @@ jobs:
           pattern: Keybed-*
       - name: Create checksums
         working-directory: downloads
-        run: sha256sum Keybed-macOS-universal.zip Keybed-Windows-x64.zip Keybed-Windows-arm64.zip Keybed.soundbank > SHA256SUMS.txt
+        run: sha256sum Keybed-macOS-universal.dmg Keybed-macOS-universal.zip Keybed-Windows-x64.exe Keybed-Windows-x64.zip Keybed-Windows-arm64.exe Keybed-Windows-arm64.zip Keybed.soundbank > SHA256SUMS.txt
       - name: Publish only after all platform checks pass
         env:
           GH_TOKEN: ${{ github.token }}
           RELEASE_TAG: ${{ github.ref_name }}
         run: |
           gh release create "$RELEASE_TAG" \
+            downloads/Keybed-macOS-universal.dmg \
             downloads/Keybed-macOS-universal.zip \
+            downloads/Keybed-Windows-x64.exe \
             downloads/Keybed-Windows-x64.zip \
+            downloads/Keybed-Windows-arm64.exe \
             downloads/Keybed-Windows-arm64.zip \
             downloads/Keybed.soundbank downloads/SHA256SUMS.txt \
             --verify-tag --prerelease \

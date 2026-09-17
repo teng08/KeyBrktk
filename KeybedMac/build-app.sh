@@ -54,8 +54,8 @@ cat > "$STAGED_APP/Contents/Info.plist" <<'PLIST'
 <key>CFBundleName</key><string>Keybed</string>
 <key>CFBundleIconFile</key><string>Keybed</string>
 <key>CFBundlePackageType</key><string>APPL</string>
-<key>CFBundleShortVersionString</key><string>3.5</string>
-<key>CFBundleVersion</key><string>9</string>
+<key>CFBundleShortVersionString</key><string>3.6</string>
+<key>CFBundleVersion</key><string>10</string>
 <key>LSUIElement</key><true/>
 <key>LSMinimumSystemVersion</key><string>11.0</string>
 <key>NSHighResolutionCapable</key><true/>

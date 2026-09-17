@@ -6,7 +6,6 @@ import (
 	"flag"
 	"fmt"
 	"os"
-	"path/filepath"
 	"runtime"
 	"syscall"
 	"time"
@@ -22,6 +21,7 @@ const (
 	idPreview       = 105
 	idQuit          = 106
 	idShow          = 107
+	idCredits       = 113
 )
 
 type studio struct {
@@ -104,6 +104,7 @@ func (s *studio) menu() {
 	}
 	appendMenu.Call(menu, 0, idMute, uintptr(unsafe.Pointer(wide(label))))
 	appendMenu.Call(menu, 0, idPreview, uintptr(unsafe.Pointer(wide("Test sound"))))
+	appendMenu.Call(menu, 0, idCredits, uintptr(unsafe.Pointer(wide("Sound credits and licenses"))))
 	appendMenu.Call(menu, 0x800, 0, 0)
 	appendMenu.Call(menu, 0, idQuit, uintptr(unsafe.Pointer(wide("Quit Keybed"))))
 	var point [2]int32
@@ -208,6 +209,10 @@ func (s *studio) procedure(window, message, wparam, lparam uintptr) uintptr {
 			destroyWindow.Call(window)
 		case idShow:
 			s.show()
+		case idCredits:
+			if err := s.showCredits(); err != nil {
+				setText(s.status, err.Error())
+			}
 		default:
 			if notification == 0 && id >= idCardBase && id < idCardBase+uintptr(len(presetNames)) {
 				s.settings.Preset = int(id - idCardBase)
@@ -287,13 +292,18 @@ func run() error {
 		return err
 	}
 	selfTest := flag.Bool("self-test", false, "test all sounds without an audio device or keyboard hook")
+	credits := flag.Bool("credits", false, "print bundled sound credits and full license notices, then exit")
 	smoke := flag.Bool("smoke-test", false, "test the window, tray and keyboard listener, then exit")
 	background := flag.Bool("background", false, "start in the tray without showing the studio")
 	screenshot := flag.String("screenshot", "", "save the studio UI during a smoke test only")
 	noAudio := flag.Bool("no-audio", false, "disable audio for the smoke test only")
 	allowTrayFallback := flag.Bool("allow-tray-fallback", false, "test the documented experimental ARM64 no-tray fallback")
-	bankPath := flag.String("bank", filepath.Join(filepath.Dir(executable), "Keybed.soundbank"), "preloaded sound bank path")
+	bankPath := flag.String("bank", "", "optional override for the built-in sound bank (source builds default to a sidecar)")
 	flag.Parse()
+	if *credits {
+		fmt.Println(appCredits())
+		return nil
+	}
 	if *screenshot != "" && !*smoke {
 		return fmt.Errorf("--screenshot requires --smoke-test")
 	}
@@ -303,7 +313,7 @@ func run() error {
 	if *allowTrayFallback && (!*smoke || runtime.GOARCH != "arm64") {
 		return fmt.Errorf("--allow-tray-fallback is only supported with --smoke-test on experimental Windows ARM64")
 	}
-	bank, err := loadBank(*bankPath)
+	bank, err := loadAppBank(*bankPath, executable)
 	if err != nil {
 		return err
 	}

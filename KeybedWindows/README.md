@@ -1,12 +1,16 @@
 # Keybed for Windows (preview)
 
-Download `Keybed-Windows-x64.zip` for Intel/AMD PCs running Windows 10 or 11,
-or the **experimental** `Keybed-Windows-arm64.zip` for Windows 11 on ARM, from
+Download `Keybed-Windows-x64.exe` for Intel/AMD PCs running Windows 10 or 11,
+or the **experimental** `Keybed-Windows-arm64.exe` for Windows 11 on ARM, from
 [GitHub Releases](https://github.com/teng08/KeyBrktk/releases).
 
-Right-click the ZIP and choose **Extract All**, then double-click `Keybed.exe`.
-Keep `Keybed.soundbank` beside the executable. No Go installation, .NET runtime,
-installer or administrator access is required to run the download.
+Save the EXE in a permanent folder, then double-click it. **The one EXE includes
+all sounds, credits and full license notices.** No extra files, Go, .NET runtime,
+installer or administrator installation is required. Use **Credits** in Sound
+Studio or the tray menu to read the bundled notices.
+Optional ZIP downloads contain the same standalone EXE plus credits/instructions;
+choose **Extract All** before launching one. Releases 3.5 and earlier still need
+`Keybed.soundbank` beside their executable; this requirement is removed in 3.6.
 
 This preview is unsigned. Windows may show an unknown-publisher/SmartScreen
 warning. Only continue if you obtained the file from this repository and trust
@@ -62,7 +66,7 @@ Overlay visibility is saved with the other settings.
 **Start automatically when I log in** is off by default on Windows. Checking it
 registers this exact executable in the current user's Windows Run key and starts
 Keybed in the background at sign-in. Unchecking it removes that setting; no
-administrator access is needed. Keep the extracted app folder in its permanent
+administrator access is needed. Keep the executable in its permanent
 location before enabling startup. A manually created Startup-folder shortcut
 from an older version is separate and must be removed manually if not wanted.
 Mac continues to use its existing login-agent and Input Monitoring integration;
@@ -70,10 +74,10 @@ Windows installs its own keyboard hook instead of showing a Mac permission butto
 
 ## Verify the download
 
-Run in PowerShell from the extracted folder:
+Run in PowerShell from the download's folder (use its downloaded filename):
 
 ```powershell
-.\Keybed.exe --self-test
+.\Keybed-Windows-x64.exe --self-test
 if ($LASTEXITCODE -ne 0) { throw "Keybed self-test failed" }
 ```
 
@@ -87,7 +91,10 @@ Keybed retries the default output instead of exiting.
 ## Build from source
 
 Go 1.20 or newer is required for rebuilding only. The Windows app has no external
-Go dependencies and does not use cgo.
+Go dependencies and does not use cgo. `build.ps1` stages the bank and credits
+into ignored `assets/`, then builds with `-tags bundled` to embed them. It produces
+both the single-file EXE and the optional ZIP. Normal `go build` without this tag
+still supports a sidecar bank for source development, or an explicit `--bank PATH`.
 
 Download `Keybed.soundbank` from the same release into `dist/common/`, or generate
 it on a Mac with Apple's Command Line Tools:
@@ -116,6 +123,9 @@ Pop-Location
 ```
 
 GitHub Actions builds and runs tests separately on Windows x64 and Windows ARM64.
+The release EXE is tested alone in an empty folder, without its ZIP, credits
+folder or a sidecar bank. Tests also compare its embedded bank and full notices
+byte-for-byte with the source/export, and open/resize/close the credits viewer.
 The CI smoke test clicks every sound card and intensity button, verifies scrolling
 and small-screen footer access, exercises 100/150/200% DPI layout changes, and
 checks floating-counter enable/disable, counting, idle collapse, focus and reset.
