@@ -21,6 +21,9 @@ preview and a three-second typing counter. Audio samples are preloaded and up to
 Closing the studio hides it and leaves keyboard sounds running. Double-click the
 notification-area icon to reopen it, or right-click the icon to mute, preview or
 quit. Use **Quit Keybed** to stop the app. Only one instance runs at a time.
+If Explorer/the notification area is unavailable, closing the studio minimizes
+it rather than hiding it, and the app retries tray registration. It never leaves
+you with a hidden studio and no tray entry.
 
 The hook always forwards keyboard events unchanged. Key characters are never
 saved or transmitted. Only temporary key-down state, an aggregate count and
@@ -84,3 +87,6 @@ GitHub Actions builds and runs tests separately on Windows x64 and Windows ARM64
 The CI smoke test checks native window/control/tray creation, keyboard-hook
 installation and shutdown with audio disabled, because hosted runners may not
 have a sound device. Real-device playback still needs manual verification.
+The ARM runner can also lack Explorer: in that case the smoke test explicitly
+reports that tray registration could not be checked, but still checks the native
+controls and keyboard hook. A tray failure with Explorer present always fails CI.

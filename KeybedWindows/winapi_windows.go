@@ -22,6 +22,8 @@ var (
 	translateMessage    = user32.NewProc("TranslateMessage")
 	dispatchMessage     = user32.NewProc("DispatchMessageW")
 	showWindow          = user32.NewProc("ShowWindow")
+	isWindowVisible     = user32.NewProc("IsWindowVisible")
+	isIconic            = user32.NewProc("IsIconic")
 	setForegroundWindow = user32.NewProc("SetForegroundWindow")
 	findWindow          = user32.NewProc("FindWindowW")
 	destroyWindow       = user32.NewProc("DestroyWindow")

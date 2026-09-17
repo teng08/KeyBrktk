@@ -23,6 +23,8 @@ mouse-following HUD and automatic login setup are not yet ported.
 CI builds and checks the app on Intel macOS, Apple-silicon macOS, Windows x64 and
 Windows ARM64, including the production sound bank. Windows smoke tests check
 window/tray creation, hook installation and shutdown without an audio device.
+If the ARM runner has no Explorer taskbar, its smoke test explicitly reports
+tray verification as unavailable; the native controls and hook are still checked.
 This is not a guarantee of global keyboard access or audio playback on every
 physical device: please test on your target computer and report issues.
 

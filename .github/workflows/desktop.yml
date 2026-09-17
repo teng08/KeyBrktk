@@ -80,9 +80,11 @@ jobs:
           - runner: windows-latest
             arch: amd64
             label: x64
+            smoke_args: "'--smoke-test', '--no-audio'"
           - runner: windows-11-arm
             arch: arm64
             label: arm64
+            smoke_args: "'--smoke-test', '--no-audio', '--allow-missing-tray'"
     runs-on: ${{ matrix.runner }}
     timeout-minutes: 15
     steps:
@@ -116,7 +118,7 @@ jobs:
       - name: Smoke-test native controls, tray and global keyboard hook
         run: |
           $app = Join-Path $PWD 'dist/windows-${{ matrix.label }}/Keybed.exe'
-          $process = Start-Process -FilePath $app -ArgumentList '--smoke-test', '--no-audio' -PassThru -NoNewWindow
+          $process = Start-Process -FilePath $app -ArgumentList ${{ matrix.smoke_args }} -PassThru -NoNewWindow
           if (-not $process.WaitForExit(30000)) { $process.Kill(); throw "Windows smoke test timed out" }
           if ($process.ExitCode -ne 0) { throw "Windows smoke test failed: $($process.ExitCode)" }
       - uses: actions/upload-artifact@v7

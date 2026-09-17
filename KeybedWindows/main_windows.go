@@ -36,6 +36,9 @@ type studio struct {
 	counter                           typingCounter
 	output                            *outputState
 	smoke                             bool
+	allowMissingTray, trayAvailable   bool
+	lastTrayAttempt                   time.Time
+	smokeError                        error
 }
 
 func (s *studio) apply() {
@@ -58,6 +61,13 @@ func (s *studio) toggleMute() {
 }
 
 func (s *studio) show() { showWindow.Call(s.window, 9); setForegroundWindow.Call(s.window) }
+
+func (s *studio) addTray() bool {
+	s.lastTrayAttempt = time.Now()
+	result, _, _ := notifyIcon.Call(0, uintptr(unsafe.Pointer(&s.icon)))
+	s.trayAvailable = result != 0
+	return s.trayAvailable
+}
 
 func (s *studio) menu() {
 	menu, _, _ := createPopupMenu.Call()
@@ -83,12 +93,16 @@ func (s *studio) menu() {
 func (s *studio) procedure(window, message, wparam, lparam uintptr) uintptr {
 	if message != 0 && message == s.taskbarMessage {
 		// Restore the tray icon when Explorer/the taskbar is restarted.
-		notifyIcon.Call(0, uintptr(unsafe.Pointer(&s.icon)))
+		s.addTray()
 		return 0
 	}
 	switch message {
 	case 0x10: // Close hides the studio; the explicit Quit command stops listening.
-		showWindow.Call(window, 0)
+		if s.trayAvailable {
+			showWindow.Call(window, 0)
+		} else {
+			showWindow.Call(window, 6)
+		}
 		return 0
 	case 0x02:
 		notifyIcon.Call(2, uintptr(unsafe.Pointer(&s.icon)))
@@ -135,6 +149,7 @@ func (s *studio) procedure(window, message, wparam, lparam uintptr) uintptr {
 		return 0
 	case 0x113:
 		if wparam == 2 {
+			s.smokeError = s.checkStudio()
 			destroyWindow.Call(window)
 			return 0
 		}
@@ -145,6 +160,14 @@ func (s *studio) procedure(window, message, wparam, lparam uintptr) uintptr {
 		}
 		if s.settings.Muted {
 			status = "Muted · keyboard listener still active"
+		}
+		if !s.trayAvailable {
+			if time.Since(s.lastTrayAttempt) >= 2*time.Second {
+				s.addTray()
+			}
+			if !s.trayAvailable {
+				status = "No tray; Close minimizes · " + status
+			}
 		}
 		setText(s.status, status)
 		return 0
@@ -171,6 +194,62 @@ func (s *studio) control(class, text string, style uintptr, x, y, width, height 
 	font, _, _ := syscall.NewLazyDLL("gdi32.dll").NewProc("GetStockObject").Call(17)
 	sendMessage.Call(window, 0x30, font, 1)
 	return window, nil
+}
+
+// Exercise native controls and close/reopen behavior, not just their creation.
+func (s *studio) checkStudio() error {
+	count, _, _ := sendMessage.Call(s.preset, 0x146, 0, 0)
+	if int(count) != len(presetNames) {
+		return fmt.Errorf("preset dropdown is incomplete")
+	}
+	count, _, _ = sendMessage.Call(s.intensity, 0x146, 0, 0)
+	if int(count) != len(intensityNames) {
+		return fmt.Errorf("intensity dropdown is incomplete")
+	}
+	sendMessage.Call(s.preset, 0x14e, 9, 0)
+	sendMessage.Call(s.window, 0x111, (1<<16)|idPreset, s.preset)
+	if s.settings.Preset != 9 || s.mixer.preset.Load() != 9 {
+		return fmt.Errorf("preset control did not configure audio")
+	}
+	sendMessage.Call(s.intensity, 0x14e, 2, 0)
+	sendMessage.Call(s.window, 0x111, (1<<16)|idIntensity, s.intensity)
+	if s.settings.Intensity != 2 || s.mixer.intensity.Load() != 2 {
+		return fmt.Errorf("intensity control did not configure audio")
+	}
+	sendMessage.Call(s.volume, 0x405, 1, 61)
+	sendMessage.Call(s.window, 0x114, 0, s.volume)
+	if s.settings.Volume != 61 {
+		return fmt.Errorf("volume slider did not configure audio")
+	}
+	sendMessage.Call(s.releases, 0xf1, 0, 0)
+	sendMessage.Call(s.window, 0x111, idReleases, s.releases)
+	if s.settings.Releases || s.mixer.releases.Load() {
+		return fmt.Errorf("release control did not configure audio")
+	}
+	wasMuted := s.settings.Muted
+	sendMessage.Call(s.window, 0x111, idMute, s.mute)
+	if s.settings.Muted == wasMuted || s.mixer.muted.Load() != s.settings.Muted {
+		return fmt.Errorf("mute control did not configure audio")
+	}
+	sendMessage.Call(s.window, 0x10, 0, 0)
+	if s.trayAvailable {
+		visible, _, _ := isWindowVisible.Call(s.window)
+		if visible != 0 {
+			return fmt.Errorf("close did not hide the studio")
+		}
+	} else {
+		minimized, _, _ := isIconic.Call(s.window)
+		if minimized == 0 {
+			return fmt.Errorf("close did not minimize without a tray")
+		}
+	}
+	s.show()
+	visible, _, _ := isWindowVisible.Call(s.window)
+	minimized, _, _ := isIconic.Call(s.window)
+	if visible == 0 || minimized != 0 {
+		return fmt.Errorf("studio did not reopen")
+	}
+	return nil
 }
 
 func (s *studio) create() error {
@@ -245,9 +324,12 @@ func (s *studio) create() error {
 	}
 	s.icon = iconData{size: uint32(unsafe.Sizeof(iconData{})), window: s.window, id: 1, flags: 7, callback: trayMessage, icon: icon}
 	copy(s.icon.tip[:], syscall.StringToUTF16("Keybed · keyboard sounds"))
-	result, _, err = notifyIcon.Call(0, uintptr(unsafe.Pointer(&s.icon)))
-	if result == 0 {
-		return winError("create notification-area icon", err)
+	if !s.addTray() {
+		taskbar, _, _ := findWindow.Call(uintptr(unsafe.Pointer(wide("Shell_TrayWnd"))), 0)
+		if s.smoke && (!s.allowMissingTray || taskbar != 0) {
+			return fmt.Errorf("create notification-area icon failed (Explorer taskbar present: %t)", taskbar != 0)
+		}
+		fmt.Printf("NOTE: notification area unavailable (Explorer taskbar present: %t); Close minimizes instead of hiding.\n", taskbar != 0)
 	}
 	setTimer.Call(s.window, 1, 250, 0)
 	return nil
@@ -261,10 +343,14 @@ func run() error {
 	selfTest := flag.Bool("self-test", false, "test all sounds without an audio device or keyboard hook")
 	smoke := flag.Bool("smoke-test", false, "test the window, tray and keyboard listener, then exit")
 	noAudio := flag.Bool("no-audio", false, "disable audio for the smoke test only")
+	allowMissingTray := flag.Bool("allow-missing-tray", false, "allow a smoke test without a tray only when Explorer is absent")
 	bankPath := flag.String("bank", filepath.Join(filepath.Dir(executable), "Keybed.soundbank"), "preloaded sound bank path")
 	flag.Parse()
 	if *noAudio && !*smoke {
 		return fmt.Errorf("--no-audio is only supported with --smoke-test")
+	}
+	if *allowMissingTray && !*smoke {
+		return fmt.Errorf("--allow-missing-tray is only supported with --smoke-test")
 	}
 	bank, err := loadBank(*bankPath)
 	if err != nil {
@@ -288,7 +374,7 @@ func run() error {
 		}
 		return nil
 	}
-	s := &studio{settings: readSettings(settingsPath()), mixer: newMixer(bank), smoke: *smoke}
+	s := &studio{settings: readSettings(settingsPath()), mixer: newMixer(bank), smoke: *smoke, allowMissingTray: *allowMissingTray}
 	s.mixer.configure(s.settings)
 	if err := s.create(); err != nil {
 		if s.window != 0 {
@@ -325,7 +411,14 @@ func run() error {
 		dispatchMessage.Call(uintptr(unsafe.Pointer(&message)))
 	}
 	if *smoke {
-		fmt.Println("PASS: native window, controls, tray icon, global keyboard hook and clean shutdown.")
+		if s.smokeError != nil {
+			return s.smokeError
+		}
+		if s.trayAvailable {
+			fmt.Println("PASS: native window, controls, tray icon, global keyboard hook and clean shutdown.")
+		} else {
+			fmt.Println("PASS: native window, controls, global keyboard hook and clean shutdown. Tray check unavailable: this desktop has no Explorer taskbar.")
+		}
 	}
 	return nil
 }
