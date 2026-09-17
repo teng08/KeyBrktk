@@ -151,6 +151,42 @@ final class StudioView: NSView {
     }
 }
 
+// Legacy (always-visible) scrollbars occupy space; overlay scrollbars do not.
+// Follow the clip view's width so neither style creates hidden horizontal content.
+final class SoundLibraryView: NSView {
+    override var isFlipped: Bool { true }
+    private let featuredIndex: Int
+    private let gridPositions: [Int: Int]
+
+    init(frame: NSRect, featuredIndex: Int, gridOrder: [Int]) {
+        self.featuredIndex = featuredIndex
+        gridPositions = Dictionary(uniqueKeysWithValues: gridOrder.enumerated().map { ($0.element, $0.offset) })
+        super.init(frame: frame)
+        autoresizingMask = [.width]
+    }
+
+    required init?(coder: NSCoder) { fatalError("init(coder:) is not supported") }
+
+    override func setFrameSize(_ newSize: NSSize) {
+        super.setFrameSize(newSize)
+        layoutCards()
+    }
+
+    func layoutCards() {
+        let pitch = (bounds.width + 10) / 3
+        for case let card as SoundCard in subviews {
+            if card.tag == featuredIndex {
+                card.frame = NSRect(x: 0, y: 0, width: bounds.width, height: 62)
+            } else if let position = gridPositions[card.tag] {
+                let column = position % 3
+                let x = (CGFloat(column) * pitch).rounded()
+                let right = column == 2 ? bounds.width : (CGFloat(column + 1) * pitch).rounded() - 10
+                card.frame = NSRect(x: x, y: CGFloat(70 + (position / 3) * 70), width: right - x, height: 62)
+            }
+        }
+    }
+}
+
 final class SoundCard: NSButton {
     override var isFlipped: Bool { true }
     let preset: SoundPreset
@@ -175,13 +211,16 @@ final class SoundCard: NSButton {
         name.font = .systemFont(ofSize: 13, weight: .semibold)
         name.textColor = .white
         name.frame = NSRect(x: 47, y: 13, width: frame.width - 81, height: 20)
+        name.autoresizingMask = [.width]
         addSubview(name)
         let detail = NSTextField(labelWithString: preset.detail)
         detail.font = .systemFont(ofSize: 10.5)
         detail.textColor = NSColor(white: 0.66, alpha: 1)
         detail.frame = NSRect(x: 14, y: frame.height - 26, width: frame.width - 25, height: 18)
+        detail.autoresizingMask = [.width]
         addSubview(detail)
         badge.frame = NSRect(x: frame.width - 36, y: 19, width: 29, height: 14)
+        badge.autoresizingMask = [.minXMargin]
         badge.font = .systemFont(ofSize: 8, weight: .bold)
         badge.textColor = preset.color
         addSubview(badge)

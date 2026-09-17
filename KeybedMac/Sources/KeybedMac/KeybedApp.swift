@@ -382,7 +382,8 @@ final class KeybedApp: NSObject, NSApplicationDelegate, NSWindowDelegate {
         let gridOrder = newIndices + SoundPreset.all.indices.filter { $0 != featuredIndex && !newIndices.contains($0) }
         let gridPositions = Dictionary(uniqueKeysWithValues: gridOrder.enumerated().map { ($0.element, $0.offset) })
         let rows = (gridOrder.count + 2) / 3
-        let library = StudioView(frame: NSRect(x: 0, y: 0, width: 704, height: 70 + rows * 70 - 8))
+        let library = SoundLibraryView(frame: NSRect(x: 0, y: 0, width: 704, height: 70 + rows * 70 - 8),
+                                       featuredIndex: featuredIndex, gridOrder: gridOrder)
         libraryScroll = NSScrollView(frame: NSRect(x: 28, y: 142, width: 704, height: 276))
         libraryScroll.hasVerticalScroller = true
         libraryScroll.autohidesScrollers = true
@@ -390,6 +391,8 @@ final class KeybedApp: NSObject, NSApplicationDelegate, NSWindowDelegate {
         libraryScroll.drawsBackground = false
         libraryScroll.documentView = library
         root.addSubview(libraryScroll)
+        libraryScroll.tile()
+        library.setFrameSize(NSSize(width: libraryScroll.contentSize.width, height: library.frame.height))
         for (index, preset) in SoundPreset.all.enumerated() {
             let position = gridPositions[index] ?? 0
             let featured = index == featuredIndex
@@ -401,6 +404,7 @@ final class KeybedApp: NSObject, NSApplicationDelegate, NSWindowDelegate {
             cards.append(card)
             library.addSubview(card)
         }
+        library.layoutCards()
         _ = label("INTENSITY", frame: NSRect(x: 28, y: 443, width: 100, height: 18), size: 10, weight: .bold)
         intensityControl = NSSegmentedControl(labels: KeyboardAudio.intensityNames, trackingMode: .selectOne,
             target: self, action: #selector(changeIntensity(_:)))
