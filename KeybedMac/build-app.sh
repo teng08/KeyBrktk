@@ -2,7 +2,8 @@
 set -euo pipefail
 cd "$(dirname "$0")"
 PROJECT_DIR="$(cd .. && pwd)"
-APP_DIR="$PROJECT_DIR/Keybed.app"
+APP_DIR="${KEYBED_APP_OUTPUT:-$PROJECT_DIR/Keybed.app}"
+mkdir -p "$(dirname "$APP_DIR")"
 # Build and validate a new bundle before replacing the working app.
 BUILD_DIR="$(mktemp -d "$PROJECT_DIR/.keybed-build.XXXXXX")"
 trap 'if [[ "${KEYBED_KEEP_BUILD:-0}" != 1 ]]; then rm -rf "$BUILD_DIR"; fi' EXIT
@@ -16,13 +17,20 @@ if ! xcrun --find swiftc >/dev/null 2>&1; then
     echo "Install Apple's Command Line Tools with: xcode-select --install" >&2
     exit 1
 fi
-xcrun clang -O3 -std=c11 -mmacosx-version-min=11.0 \
-    -I Sources/AudioMixer/include -c Sources/AudioMixer/AudioMixer.c -o "$BUILD_DIR/AudioMixer.o"
-xcrun swiftc -O -module-cache-path "$MODULE_CACHE" \
-    -target "$(uname -m)-apple-macosx11.0" -I Sources/AudioMixer/include \
-    Sources/KeybedMac/*.swift "$BUILD_DIR/AudioMixer.o" \
-    -o "$STAGED_APP/Contents/MacOS/Keybed" \
-    -framework AppKit -framework AVFoundation -framework ApplicationServices
+SDK_PATH="$(xcrun --sdk macosx --show-sdk-path)"
+# One download runs natively on Intel and Apple silicon, without Rosetta.
+for CPU_ARCH in x86_64 arm64; do
+    xcrun clang -O3 -std=c11 -arch "$CPU_ARCH" -isysroot "$SDK_PATH" -mmacosx-version-min=11.0 \
+        -I Sources/AudioMixer/include -c Sources/AudioMixer/AudioMixer.c -o "$BUILD_DIR/AudioMixer-$CPU_ARCH.o"
+    xcrun swiftc -O -module-cache-path "$MODULE_CACHE" -sdk "$SDK_PATH" \
+        -target "$CPU_ARCH-apple-macosx11.0" -I Sources/AudioMixer/include \
+        Sources/KeybedMac/*.swift "$BUILD_DIR/AudioMixer-$CPU_ARCH.o" \
+        -o "$BUILD_DIR/Keybed-$CPU_ARCH" \
+        -framework AppKit -framework AVFoundation -framework ApplicationServices
+done
+xcrun lipo -create "$BUILD_DIR/Keybed-x86_64" "$BUILD_DIR/Keybed-arm64" \
+    -output "$STAGED_APP/Contents/MacOS/Keybed"
+xcrun lipo "$STAGED_APP/Contents/MacOS/Keybed" -verify_arch x86_64 arm64
 cp -R "$PROJECT_DIR/Sounds/Alpaca" "$STAGED_APP/Contents/Resources/Sounds/Alpaca"
 mkdir -p "$STAGED_APP/Contents/Resources/Sounds/Tactile"
 cp "$PROJECT_DIR"/Sounds/Tactile/stav-tactile-*.mp3 "$STAGED_APP/Contents/Resources/Sounds/Tactile/"
@@ -43,8 +51,8 @@ cat > "$STAGED_APP/Contents/Info.plist" <<'PLIST'
 <key>CFBundleName</key><string>Keybed</string>
 <key>CFBundleIconFile</key><string>Keybed</string>
 <key>CFBundlePackageType</key><string>APPL</string>
-<key>CFBundleShortVersionString</key><string>3.2</string>
-<key>CFBundleVersion</key><string>6</string>
+<key>CFBundleShortVersionString</key><string>3.3</string>
+<key>CFBundleVersion</key><string>7</string>
 <key>LSUIElement</key><true/>
 <key>LSMinimumSystemVersion</key><string>11.0</string>
 <key>NSHighResolutionCapable</key><true/>

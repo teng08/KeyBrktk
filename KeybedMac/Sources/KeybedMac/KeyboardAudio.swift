@@ -31,6 +31,35 @@ final class KeyboardAudio {
         storage = try MixerStorage()
         let mixer = storage.pointer
         for preset in SoundPreset.all {
+            let decoded = try Self.decodedSamples(preset: preset, resourceURL: resourceURL)
+            var modes: [[String: Int32]] = []
+            for mode in 0..<Self.intensityNames.count {
+                var ids: [String: Int32] = [:]
+                for (name, frames) in decoded {
+                    let prepared = Self.prepare(frames, intensity: mode, release: name.hasPrefix("release"),
+                                                maximumFrames: preset.id == "skibiddy" ? 44_100 : 7_938)
+                    let id = prepared.withUnsafeBufferPointer { KBMixerAddSample(mixer, $0.baseAddress, UInt32($0.count)) }
+                    guard id >= 0 else { throw KeybedError(message: "Could not preload \(preset.name) / \(name).") }
+                    ids[name] = id
+                }
+                modes.append(ids)
+            }
+            sampleIDs.append(modes)
+        }
+        let format = AVAudioFormat(standardFormatWithSampleRate: 44_100, channels: 1)!
+        source = AVAudioSourceNode(format: format) { silence, _, frameCount, bufferList in
+            let buffers = UnsafeMutableAudioBufferListPointer(bufferList)
+            guard let data = buffers[0].mData else { return noErr }
+            let audible = KBMixerRender(mixer, data.assumingMemoryBound(to: Float.self), frameCount)
+            silence.pointee = ObjCBool(!audible)
+            return noErr
+        }
+        engine.attach(source)
+        engine.connect(source, to: engine.mainMixerNode, format: format)
+    }
+
+    // Both desktop apps use the same decoded, normalized and processed samples.
+    private static func decodedSamples(preset: SoundPreset, resourceURL: URL) throws -> [(String, [Float])] {
             let decoded: [(String, [Float])]
             switch preset.id {
             case "skibiddy":
@@ -60,30 +89,34 @@ final class KeyboardAudio {
                     (name, SoundGenerator.make(style: preset.id, key: name, variant: index))
                 }
             }
-            var modes: [[String: Int32]] = []
-            for mode in 0..<Self.intensityNames.count {
-                var ids: [String: Int32] = [:]
+            return decoded
+    }
+
+    static func exportWindowsSoundBank(resourceURL: URL, output: URL) throws {
+        var data = Data("KBPCM001".utf8)
+        func append(_ value: UInt32) {
+            var littleEndian = value.littleEndian
+            withUnsafeBytes(of: &littleEndian) { data.append(contentsOf: $0) }
+        }
+        append(44_100)
+        append(UInt32(SoundPreset.all.count))
+        append(UInt32(intensityNames.count))
+        append(UInt32(SoundGenerator.names.count))
+        for preset in SoundPreset.all {
+            let decoded = try decodedSamples(preset: preset, resourceURL: resourceURL)
+            for mode in intensityNames.indices {
                 for (name, frames) in decoded {
-                    let prepared = Self.prepare(frames, intensity: mode, release: name.hasPrefix("release"),
-                                                maximumFrames: preset.id == "skibiddy" ? 44_100 : 7_938)
-                    let id = prepared.withUnsafeBufferPointer { KBMixerAddSample(mixer, $0.baseAddress, UInt32($0.count)) }
-                    guard id >= 0 else { throw KeybedError(message: "Could not preload \(preset.name) / \(name).") }
-                    ids[name] = id
+                    let prepared = prepare(frames, intensity: mode, release: name.hasPrefix("release"),
+                                           maximumFrames: preset.id == "skibiddy" ? 44_100 : 7_938)
+                    append(UInt32(prepared.count))
+                    let words = prepared.map { $0.bitPattern.littleEndian }
+                    words.withUnsafeBytes { data.append(contentsOf: $0) }
                 }
-                modes.append(ids)
             }
-            sampleIDs.append(modes)
         }
-        let format = AVAudioFormat(standardFormatWithSampleRate: 44_100, channels: 1)!
-        source = AVAudioSourceNode(format: format) { silence, _, frameCount, bufferList in
-            let buffers = UnsafeMutableAudioBufferListPointer(bufferList)
-            guard let data = buffers[0].mData else { return noErr }
-            let audible = KBMixerRender(mixer, data.assumingMemoryBound(to: Float.self), frameCount)
-            silence.pointee = ObjCBool(!audible)
-            return noErr
-        }
-        engine.attach(source)
-        engine.connect(source, to: engine.mainMixerNode, format: format)
+        try FileManager.default.createDirectory(at: output.deletingLastPathComponent(), withIntermediateDirectories: true)
+        try data.write(to: output, options: .atomic)
+        print("Exported 360 preloaded Windows samples to \(output.path).")
     }
 
     deinit {

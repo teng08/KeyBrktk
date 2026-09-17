@@ -28,6 +28,9 @@ func projectRoot() (string, error) {
 }
 
 func run() error {
+	if runtime.GOOS != "darwin" {
+		return fmt.Errorf("this optional launcher is for macOS; download the Windows app from https://github.com/teng08/KeyBrktk/releases")
+	}
 	rebuild := flag.Bool("build", false, "rebuild the native app before opening")
 	selfTest := flag.Bool("self-test", false, "verify bundled sounds without opening a window")
 	flag.Parse()

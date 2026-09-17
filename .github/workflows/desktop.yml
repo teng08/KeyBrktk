@@ -1,0 +1,158 @@
+name: Desktop builds
+
+on:
+  push:
+    branches: [main]
+    tags: ['v*']
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: desktop-${{ github.ref }}
+  cancel-in-progress: ${{ !startsWith(github.ref, 'refs/tags/') }}
+
+jobs:
+  macos:
+    name: macOS (${{ matrix.runner }})
+    strategy:
+      fail-fast: false
+      matrix:
+        runner: [macos-15-intel, macos-26]
+    runs-on: ${{ matrix.runner }}
+    timeout-minutes: 20
+    env:
+      KEYBED_APP_OUTPUT: ${{ github.workspace }}/dist/macos/Keybed.app
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - uses: actions/setup-go@v7
+        with:
+          go-version: stable
+          cache: false
+      - name: Build universal Intel and Apple-silicon app
+        run: ./KeybedMac/build-app.sh
+      - name: Verify both architectures and signing
+        run: |
+          xcrun lipo "$KEYBED_APP_OUTPUT/Contents/MacOS/Keybed" -verify_arch x86_64 arm64
+          codesign --verify --strict "$KEYBED_APP_OUTPUT"
+      - name: Audio, typing-counter and sanitizer checks
+        run: ./KeybedMac/test.sh
+      - name: Export shared Windows sound bank
+        run: |
+          "$KEYBED_APP_OUTPUT/Contents/MacOS/Keybed" --export-windows-sounds "$PWD/dist/common/Keybed.soundbank"
+      - name: Test Windows audio core against production sounds
+        working-directory: KeybedWindows
+        env:
+          KEYBED_SOUND_BANK: ${{ github.workspace }}/dist/common/Keybed.soundbank
+        run: go test -race ./...
+      - name: Test optional Mac Go launcher
+        working-directory: KeybedGo
+        run: go test ./...
+      - name: Package universal app
+        if: matrix.runner == 'macos-26'
+        run: ditto -c -k --sequesterRsrc --keepParent "$KEYBED_APP_OUTPUT" dist/Keybed-macOS-universal.zip
+      - name: Upload macOS download
+        if: matrix.runner == 'macos-26'
+        uses: actions/upload-artifact@v7
+        with:
+          name: Keybed-macOS-universal
+          path: dist/Keybed-macOS-universal.zip
+          if-no-files-found: error
+      - name: Upload shared sound bank
+        if: matrix.runner == 'macos-26'
+        uses: actions/upload-artifact@v7
+        with:
+          name: Keybed-soundbank
+          path: dist/common/Keybed.soundbank
+          if-no-files-found: error
+
+  windows:
+    name: Windows (${{ matrix.arch }})
+    needs: macos
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - runner: windows-latest
+            arch: amd64
+            label: x64
+          - runner: windows-11-arm
+            arch: arm64
+            label: arm64
+    runs-on: ${{ matrix.runner }}
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - uses: actions/setup-go@v7
+        with:
+          go-version: stable
+          cache: false
+      - uses: actions/download-artifact@v8
+        with:
+          name: Keybed-soundbank
+          path: dist/common
+      - name: Test portable audio, settings and native ABI
+        working-directory: KeybedWindows
+        env:
+          KEYBED_SOUND_BANK: ${{ github.workspace }}/dist/common/Keybed.soundbank
+        run: |
+          go test ./...
+          if ($LASTEXITCODE -ne 0) { throw "Windows tests failed" }
+          go vet -unsafeptr=false ./...
+          if ($LASTEXITCODE -ne 0) { throw "Windows vet failed" }
+      - name: Build and package standalone executable
+        run: ./KeybedWindows/build.ps1 -Architecture '${{ matrix.arch }}'
+      - name: Verify packaged samples through production mixer
+        run: |
+          $app = Join-Path $PWD 'dist/windows-${{ matrix.label }}/Keybed.exe'
+          $process = Start-Process -FilePath $app -ArgumentList '--self-test' -Wait -PassThru -NoNewWindow
+          if ($process.ExitCode -ne 0) { throw "Packaged Windows sound check failed: $($process.ExitCode)" }
+      - name: Smoke-test native controls, tray and global keyboard hook
+        run: |
+          $app = Join-Path $PWD 'dist/windows-${{ matrix.label }}/Keybed.exe'
+          $process = Start-Process -FilePath $app -ArgumentList '--smoke-test', '--no-audio' -PassThru -NoNewWindow
+          if (-not $process.WaitForExit(30000)) { $process.Kill(); throw "Windows smoke test timed out" }
+          if ($process.ExitCode -ne 0) { throw "Windows smoke test failed: $($process.ExitCode)" }
+      - uses: actions/upload-artifact@v7
+        with:
+          name: Keybed-Windows-${{ matrix.label }}
+          path: dist/Keybed-Windows-${{ matrix.label }}.zip
+          if-no-files-found: error
+
+  release:
+    name: Publish preview downloads
+    if: startsWith(github.ref, 'refs/tags/')
+    needs: [macos, windows]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - uses: actions/download-artifact@v8
+        with:
+          path: downloads
+          merge-multiple: true
+      - name: Create checksums
+        working-directory: downloads
+        run: sha256sum Keybed-macOS-universal.zip Keybed-Windows-x64.zip Keybed-Windows-arm64.zip Keybed.soundbank > SHA256SUMS.txt
+      - name: Publish only after all platform checks pass
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RELEASE_TAG: ${{ github.ref_name }}
+        run: |
+          gh release create "$RELEASE_TAG" \
+            downloads/Keybed-macOS-universal.zip \
+            downloads/Keybed-Windows-x64.zip \
+            downloads/Keybed-Windows-arm64.zip \
+            downloads/Keybed.soundbank downloads/SHA256SUMS.txt \
+            --verify-tag --prerelease \
+            --title "Keybed $RELEASE_TAG · Mac and Windows preview" \
+            --notes-file .github/RELEASE_NOTES.md

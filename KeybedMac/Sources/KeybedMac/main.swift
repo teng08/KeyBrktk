@@ -224,6 +224,14 @@ if CommandLine.arguments.contains("--close-studio") {
 } else if CommandLine.arguments.contains("--enable-login") || CommandLine.arguments.contains("--disable-login") {
     do { try LoginStartup.setEnabled(CommandLine.arguments.contains("--enable-login")) }
     catch { fputs("Keybed: \(error.localizedDescription)\n", stderr); exit(1) }
+} else if let index = CommandLine.arguments.firstIndex(of: "--export-windows-sounds") {
+    do {
+        guard index + 1 < CommandLine.arguments.count, let resources = Bundle.main.resourceURL else {
+            throw KeybedError(message: "Usage: Keybed --export-windows-sounds /path/to/Keybed.soundbank")
+        }
+        try KeyboardAudio.exportWindowsSoundBank(resourceURL: resources.appendingPathComponent("Sounds"),
+            output: URL(fileURLWithPath: CommandLine.arguments[index + 1]))
+    } catch { fputs("Keybed: \(error.localizedDescription)\n", stderr); exit(1) }
 } else if CommandLine.arguments.contains("--self-test") {
     do {
         guard let resources = Bundle.main.resourceURL else { throw KeybedError(message: "Missing app resources.") }

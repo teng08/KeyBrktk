@@ -7,4 +7,4 @@ xcrun clang -O2 -std=c11 -Wall -Wextra -Werror \
     -fsanitize=address,undefined -I Sources/AudioMixer/include \
     Sources/AudioMixer/AudioMixer.c Tests/AudioMixerTests.c -o "$TEST_DIR/mixer-tests"
 "$TEST_DIR/mixer-tests"
-../Keybed.app/Contents/MacOS/Keybed --self-test
+"${KEYBED_APP_OUTPUT:-../Keybed.app}/Contents/MacOS/Keybed" --self-test

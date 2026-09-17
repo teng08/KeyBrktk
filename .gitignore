@@ -2,3 +2,5 @@
 .keybed-build.*/
 KeybedMac/.build/
 Keybed.app/
+dist/
+KeybedWindows/Keybed.exe
