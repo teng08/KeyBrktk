@@ -52,6 +52,8 @@ var (
 	createEvent         = kernel32.NewProc("CreateEventW")
 	waitForSingleObject = kernel32.NewProc("WaitForSingleObject")
 	notifyIcon          = shell32.NewProc("Shell_NotifyIconW")
+	initializeCOM       = syscall.NewLazyDLL("ole32.dll").NewProc("CoInitializeEx")
+	uninitializeCOM     = syscall.NewLazyDLL("ole32.dll").NewProc("CoUninitialize")
 	waveOutOpen         = winmm.NewProc("waveOutOpen")
 	waveOutPrepare      = winmm.NewProc("waveOutPrepareHeader")
 	waveOutWrite        = winmm.NewProc("waveOutWrite")

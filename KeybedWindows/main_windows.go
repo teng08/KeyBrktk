@@ -198,6 +198,12 @@ func (s *studio) control(class, text string, style uintptr, x, y, width, height 
 
 // Exercise native controls and close/reopen behavior, not just their creation.
 func (s *studio) checkStudio() error {
+	if !s.trayAvailable {
+		taskbar, _, _ := findWindow.Call(uintptr(unsafe.Pointer(wide("Shell_TrayWnd"))), 0)
+		if !s.allowMissingTray || taskbar != 0 {
+			return fmt.Errorf("tray registration failed after retries (Explorer taskbar present: %t, icon: %#x, window: %#x, structure size: %d)", taskbar != 0, s.icon.icon, s.window, s.icon.size)
+		}
+	}
 	count, _, _ := sendMessage.Call(s.preset, 0x146, 0, 0)
 	if int(count) != len(presetNames) {
 		return fmt.Errorf("preset dropdown is incomplete")
@@ -326,9 +332,6 @@ func (s *studio) create() error {
 	copy(s.icon.tip[:], syscall.StringToUTF16("Keybed · keyboard sounds"))
 	if !s.addTray() {
 		taskbar, _, _ := findWindow.Call(uintptr(unsafe.Pointer(wide("Shell_TrayWnd"))), 0)
-		if s.smoke && (!s.allowMissingTray || taskbar != 0) {
-			return fmt.Errorf("create notification-area icon failed (Explorer taskbar present: %t)", taskbar != 0)
-		}
 		fmt.Printf("NOTE: notification area unavailable (Explorer taskbar present: %t); Close minimizes instead of hiding.\n", taskbar != 0)
 	}
 	setTimer.Call(s.window, 1, 250, 0)
@@ -361,6 +364,11 @@ func run() error {
 	}
 	runtime.LockOSThread()
 	defer runtime.UnlockOSThread()
+	comResult, _, _ := initializeCOM.Call(0, 2) // STA for Shell APIs on the UI thread.
+	if int32(comResult) < 0 {
+		return fmt.Errorf("initialize desktop COM: %#x", uint32(comResult))
+	}
+	defer uninitializeCOM.Call()
 	mutex, _, mutexError := createMutex.Call(0, 0, uintptr(unsafe.Pointer(wide("Local\\Keybed.KeyboardSound"))))
 	if mutex == 0 {
 		return winError("create single-instance guard", mutexError)
@@ -395,7 +403,8 @@ func run() error {
 	}
 	showWindow.Call(s.window, 5)
 	if *smoke {
-		setTimer.Call(s.window, 2, 1500, 0)
+		// Give Explorer registration retries time to run while pumping messages.
+		setTimer.Call(s.window, 2, 6000, 0)
 	}
 	var message windowMessage
 	for {
