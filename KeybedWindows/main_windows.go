@@ -136,6 +136,19 @@ func (s *studio) procedure(window, message, wparam, lparam uintptr) uintptr {
 		return 0
 	case 0x111:
 		id, notification := wparam&0xffff, (wparam>>16)&0xffff
+		if lparam == s.tryField && s.tryFallback {
+			if notification == 0x100 && s.tryPlaceholder {
+				s.tryPlaceholder = false
+				setText(s.tryField, "")
+			}
+			if notification == 0x200 {
+				length, _, _ := user32.NewProc("GetWindowTextLengthW").Call(s.tryField)
+				if length == 0 {
+					s.tryPlaceholder = true
+					setText(s.tryField, "Type here to try your sound…")
+				}
+			}
+		}
 		if notification == 6 {
 			for _, control := range s.controls {
 				if control.window == lparam {

@@ -15,6 +15,16 @@ func (s *studio) checkStudio() error {
 	if s.smokeError != nil {
 		return s.smokeError
 	}
+	if s.tryFallback {
+		setFocus.Call(s.tryField)
+		if length, _, _ := user32.NewProc("GetWindowTextLengthW").Call(s.tryField); length != 0 || s.tryPlaceholder {
+			return fmt.Errorf("typing hint did not clear on focus")
+		}
+		setFocus.Call(s.mute)
+		if !s.tryPlaceholder {
+			return fmt.Errorf("empty typing field did not restore its hint")
+		}
+	}
 	if !s.trayAvailable {
 		taskbar, _, _ := findWindow.Call(uintptr(unsafe.Pointer(wide("Shell_TrayWnd"))), 0)
 		if !s.allowTrayFallback {
@@ -155,6 +165,19 @@ func (s *studio) checkStudio() error {
 		sendMessage.Call(s.window, 0x2e0, uintptr(dpi)|uintptr(dpi)<<16, uintptr(unsafe.Pointer(&proposed)))
 		if s.dpi != dpi || s.fonts[0] == 0 {
 			return fmt.Errorf("DPI scaling did not update studio")
+		}
+		for index, name := range presetNames {
+			card := soundCardLayout(int(float64(clientRect(s.library).right) / s.scale))[index]
+			s.libraryScroll = s.px(max(0, card.y+card.h-276))
+			s.layoutLibrary()
+			var rect nativeRect
+			getWindowRect.Call(s.cards[index], uintptr(unsafe.Pointer(&rect)))
+			var origin [2]int32
+			user32.NewProc("ClientToScreen").Call(s.library, uintptr(unsafe.Pointer(&origin)))
+			viewport := clientRect(s.library)
+			if rect.left < origin[0] || rect.top < origin[1] || rect.right > origin[0]+viewport.right || rect.bottom > origin[1]+viewport.bottom {
+				return fmt.Errorf("sound card clipped at %d DPI: %s", dpi, name)
+			}
 		}
 	}
 	setWindowPos.Call(s.window, 0, uintptr(old.left), uintptr(old.top), uintptr(old.right-old.left), uintptr(old.bottom-old.top), 0x14)

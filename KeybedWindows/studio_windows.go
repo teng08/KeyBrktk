@@ -27,6 +27,8 @@ type placedControl struct {
 
 type studioUI struct {
 	library, overlay, startup, selectedSound, hud uintptr
+	tryField                                      uintptr
+	tryFallback, tryPlaceholder                   bool
 	cards                                         [len(presetNames)]uintptr
 	modes                                         [len(intensityNames)]uintptr
 	controls                                      []placedControl
@@ -247,7 +249,15 @@ func (s *studio) createStudioUI() error {
 	if err != nil {
 		return err
 	}
-	sendMessage.Call(tryField, 0x1501, 1, uintptr(unsafe.Pointer(wide("Type here to try your sound…"))))
+	s.tryField = tryField
+	cue, _, _ := sendMessage.Call(tryField, 0x1501, 1, uintptr(unsafe.Pointer(wide("Type here to try your sound…"))))
+	// Classic EDIT controls without a version-6 common-controls manifest reject
+	// cue banners. Provide the same visible hint without an extra runtime/file.
+	s.tryFallback = cue == 0
+	if s.tryFallback {
+		s.tryPlaceholder = true
+		setText(tryField, "Type here to try your sound…")
+	}
 	libClass := windowClass{procedure: syscall.NewCallback(s.libraryProcedure), instance: module, cursor: cursor, background: s.backgroundBrush, className: wide("Keybed.SoundLibrary")}
 	result, _, err = registerClass.Call(uintptr(unsafe.Pointer(&libClass)))
 	if result == 0 {
@@ -384,7 +394,10 @@ func (s *studio) layoutLibrary() {
 	width := int(math.Floor(float64(r.right) / s.scale))
 	for index, p := range soundCardLayout(width) {
 		if s.cards[index] != 0 {
-			moveWindow.Call(s.cards[index], uintptr(s.px(p.x)), uintptr(s.px(p.y)-s.libraryScroll), uintptr(s.px(p.w)), uintptr(s.px(p.h)), 1)
+			// Round the edges, not x and width separately: at 125/150% scaling,
+			// two half-pixel round-ups can otherwise clip the rightmost border.
+			x, right := s.px(p.x), s.px(p.x+p.w)
+			moveWindow.Call(s.cards[index], uintptr(x), uintptr(s.px(p.y)-s.libraryScroll), uintptr(right-x), uintptr(s.px(p.h)), 1)
 		}
 	}
 	repaint(s.library)
@@ -512,6 +525,9 @@ func (s *studio) uiMessage(window, message, wparam, lparam uintptr) (uintptr, bo
 		setBGColor.Call(wparam, studioBackground)
 		setTextColor.Call(wparam, studioSecondary)
 		if lparam == s.count {
+			setTextColor.Call(wparam, studioText)
+		}
+		if lparam == s.tryField && !s.tryPlaceholder {
 			setTextColor.Call(wparam, studioText)
 		}
 		if lparam == s.selectedSound || lparam == s.status {
