@@ -1,0 +1,4 @@
+module AudioMixer {
+    header "AudioMixer.h"
+    export *
+}

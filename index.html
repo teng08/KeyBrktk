@@ -1,0 +1,75 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Keybed - Mechanical Keyboard Sound Studio</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <main class="app-shell">
+    <header class="topbar">
+      <a class="brand" href="#" aria-label="Keybed home">
+        <span class="brand-mark" aria-hidden="true"><i></i><i></i><i></i></span>
+        <span>KEYBED</span>
+      </a>
+      <div class="topbar-status"><span class="live-dot"></span> SOUND LAB <span class="status-divider"></span> <span id="statusText">READY TO TYPE</span></div>
+      <button class="icon-button" id="muteButton" aria-label="Mute all sounds" title="Mute all sounds">◖</button>
+    </header>
+
+    <section class="hero">
+      <div class="hero-copy">
+        <p class="eyebrow">01 / FIND YOUR FEEL</p>
+        <h1>Type with<br /><em>intention.</em></h1>
+        <p class="intro">A pocket-sized sound studio for the clicks, clacks, and thocks that make a keyboard feel alive.</p>
+      </div>
+      <div class="now-playing" id="nowPlaying">
+        <span class="playing-label">CURRENT SOUND</span>
+        <strong id="currentSound">Tactile Brown</strong>
+        <span class="waveform" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></span>
+      </div>
+    </section>
+
+    <section class="studio-grid">
+      <div class="keyboard-panel panel">
+        <div class="panel-header">
+          <div><span class="section-number">A</span><h2>Live keyboard</h2></div>
+          <span class="hint">click or use your keys</span>
+        </div>
+        <div class="keyboard" id="keyboard" aria-label="Playable virtual keyboard">
+          <div class="key-row">
+            <button class="key" data-key="Q">Q</button><button class="key" data-key="W">W</button><button class="key" data-key="E">E</button><button class="key" data-key="R">R</button><button class="key" data-key="T">T</button><button class="key" data-key="Y">Y</button><button class="key" data-key="U">U</button><button class="key" data-key="I">I</button><button class="key" data-key="O">O</button><button class="key" data-key="P">P</button>
+          </div>
+          <div class="key-row offset-one"><button class="key" data-key="A">A</button><button class="key" data-key="S">S</button><button class="key" data-key="D">D</button><button class="key" data-key="F">F</button><button class="key" data-key="G">G</button><button class="key" data-key="H">H</button><button class="key" data-key="J">J</button><button class="key" data-key="K">K</button><button class="key" data-key="L">L</button>
+          </div>
+          <div class="key-row offset-two"><button class="key" data-key="Z">Z</button><button class="key" data-key="X">X</button><button class="key" data-key="C">C</button><button class="key" data-key="V">V</button><button class="key" data-key="B">B</button><button class="key" data-key="N">N</button><button class="key" data-key="M">M</button><button class="key wide" data-key="BACKSPACE">⌫</button></div>
+          <div class="key-row bottom-row"><button class="key utility" data-key="SHIFT">⇧</button><button class="key space" data-key="SPACE">space</button><button class="key utility" data-key="ENTER">↵</button></div>
+        </div>
+        <div class="keyboard-footer"><span><kbd>SPACE</kbd> for a deep bar hit</span><span><kbd>SHIFT</kbd> for a heavier press</span></div>
+      </div>
+
+      <aside class="controls-panel panel">
+        <div class="panel-header"><div><span class="section-number">B</span><h2>Sound palette</h2></div></div>
+        <div class="sound-list" id="soundList">
+          <button class="sound-card active" data-sound="tactile"><span class="sound-icon">◌</span><span class="sound-info"><strong>Tactile Brown</strong><small>soft bump · warm body</small></span><span class="sound-check">●</span></button>
+          <button class="sound-card" data-sound="clicky"><span class="sound-icon">✦</span><span class="sound-info"><strong>Clicky Blue</strong><small>sharp click · crisp return</small></span><span class="sound-check">●</span></button>
+          <button class="sound-card" data-sound="thocky"><span class="sound-icon">◉</span><span class="sound-info"><strong>Deep Thock</strong><small>muted hit · desk resonance</small></span><span class="sound-check">●</span></button>
+          <button class="sound-card" data-sound="typewriter"><span class="sound-icon">▣</span><span class="sound-info"><strong>Typewriter</strong><small>bright snap · vintage charm</small></span><span class="sound-check">●</span></button>
+        </div>
+        <div class="mixer">
+          <div class="mixer-title"><span>MASTER VOLUME</span><output id="volumeValue">72%</output></div>
+          <input id="volumeSlider" type="range" min="0" max="100" value="72" aria-label="Master volume" />
+          <div class="mixer-title"><span>ROOM</span><output id="roomValue">Small studio</output></div>
+          <div class="room-buttons" role="group" aria-label="Room ambience"><button class="room-button active" data-room="small">small</button><button class="room-button" data-room="desk">desk</button><button class="room-button" data-room="hall">hall</button></div>
+        </div>
+      </aside>
+    </section>
+
+    <footer class="footer"><span>KEYBED / 2026</span><span id="keystrokeCount">0 keystrokes made</span><span>HEADPHONES RECOMMENDED</span></footer>
+  </main>
+  <script src="app.js"></script>
+</body>
+</html>
