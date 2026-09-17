@@ -10,7 +10,7 @@ Download an app ZIP rather than GitHub's automatic "Source code" archives.
 | --- | --- | --- |
 | Intel Mac or Apple-silicon MacBook/Mac | `Keybed-macOS-universal.zip` | macOS 11 |
 | Intel/AMD Windows PC | `Keybed-Windows-x64.zip` | Windows 10 |
-| Windows-on-ARM PC | `Keybed-Windows-arm64.zip` | Windows 11 |
+| Windows-on-ARM PC (experimental) | `Keybed-Windows-arm64.zip` | Windows 11 |
 
 The Mac binary contains both `x86_64` and `arm64`, so Apple-silicon MacBooks run
 natively without Rosetta. Extract it and drag `Keybed.app` into Applications.
@@ -18,6 +18,12 @@ Windows users should **Extract All** and open `Keybed.exe`; keep the bundled
 `Keybed.soundbank` beside it. Neither prebuilt download requires Go or developer
 tools. See [Windows instructions](KeybedWindows/README.md) for details and
 the Windows preview's feature differences.
+
+The native Windows ARM64 build is **experimental**: tray registration failed on
+its CI runner even with Explorer present. If the tray is unavailable, Close
+minimizes the studio instead of hiding it; reopen it from the taskbar. CI checks
+that fallback and the native controls/hook, but does **not** mark ARM64 tray
+integration as verified. Windows x64 still requires its tray check to pass.
 
 Downloads are not commercially signed/notarized yet: the Mac bundle is ad-hoc
 signed and Windows executables are unsigned. OS security warnings are possible.

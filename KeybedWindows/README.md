@@ -1,7 +1,7 @@
 # Keybed for Windows (preview)
 
 Download `Keybed-Windows-x64.zip` for Intel/AMD PCs running Windows 10 or 11,
-or `Keybed-Windows-arm64.zip` for Windows 11 on ARM, from
+or the **experimental** `Keybed-Windows-arm64.zip` for Windows 11 on ARM, from
 [GitHub Releases](https://github.com/teng08/KeyBrktk/releases).
 
 Right-click the ZIP and choose **Extract All**, then double-click `Keybed.exe`.
@@ -24,6 +24,12 @@ quit. Use **Quit Keybed** to stop the app. Only one instance runs at a time.
 If Explorer/the notification area is unavailable, closing the studio minimizes
 it rather than hiding it, and the app retries tray registration. It never leaves
 you with a hidden studio and no tray entry.
+
+**Known ARM64 limitation:** tray registration failed on the Windows ARM64 CI
+runner even though Explorer was present. The experimental ARM64 download may
+use the minimize-to-taskbar fallback instead of a tray icon. Reopen the studio
+from the taskbar and use **Quit Keybed** to stop it. ARM64 tray integration is
+not verified; the x64 download passes a strict tray check.
 
 The hook always forwards keyboard events unchanged. Key characters are never
 saved or transmitted. Only temporary key-down state, an aggregate count and
@@ -74,7 +80,7 @@ On Windows, from the repository root:
 
 ```powershell
 .\KeybedWindows\build.ps1
-# Native Windows-on-ARM package:
+# Experimental native Windows-on-ARM package:
 .\KeybedWindows\build.ps1 -Architecture arm64
 
 $env:KEYBED_SOUND_BANK = "$PWD\dist\common\Keybed.soundbank"
@@ -84,9 +90,10 @@ Pop-Location
 ```
 
 GitHub Actions builds and runs tests separately on Windows x64 and Windows ARM64.
-The CI smoke test checks native window/control/tray creation, keyboard-hook
-installation and shutdown with audio disabled, because hosted runners may not
-have a sound device. Real-device playback still needs manual verification.
-The ARM runner can also lack Explorer: in that case the smoke test explicitly
-reports that tray registration could not be checked, but still checks the native
-controls and keyboard hook. A tray failure with Explorer present always fails CI.
+The CI smoke test checks native controls, keyboard-hook installation, close/reopen
+and shutdown with audio disabled, because hosted runners may not have a sound
+device. Windows x64 must also pass tray registration. The experimental ARM64
+smoke test explicitly permits the documented tray limitation, reports it and
+verifies the minimize/reopen fallback instead; it does not claim the tray works.
+Both builds also exercise the fallback when a working tray is present.
+Real-device playback still needs manual verification.

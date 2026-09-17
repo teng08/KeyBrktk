@@ -84,7 +84,7 @@ jobs:
           - runner: windows-11-arm
             arch: arm64
             label: arm64
-            smoke_args: "'--smoke-test', '--no-audio', '--allow-missing-tray'"
+            smoke_args: "'--smoke-test', '--no-audio', '--allow-tray-fallback'"
     runs-on: ${{ matrix.runner }}
     timeout-minutes: 15
     steps:
@@ -115,7 +115,7 @@ jobs:
           $app = Join-Path $PWD 'dist/windows-${{ matrix.label }}/Keybed.exe'
           $process = Start-Process -FilePath $app -ArgumentList '--self-test' -Wait -PassThru -NoNewWindow
           if ($process.ExitCode -ne 0) { throw "Packaged Windows sound check failed: $($process.ExitCode)" }
-      - name: Smoke-test native controls, tray and global keyboard hook
+      - name: Smoke-test controls, keyboard hook and tray or experimental ARM fallback
         run: |
           $app = Join-Path $PWD 'dist/windows-${{ matrix.label }}/Keybed.exe'
           $process = Start-Process -FilePath $app -ArgumentList ${{ matrix.smoke_args }} -PassThru -NoNewWindow

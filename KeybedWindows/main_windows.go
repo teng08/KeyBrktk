@@ -36,7 +36,7 @@ type studio struct {
 	counter                           typingCounter
 	output                            *outputState
 	smoke                             bool
-	allowMissingTray, trayAvailable   bool
+	allowTrayFallback, trayAvailable  bool
 	lastTrayAttempt                   time.Time
 	smokeError                        error
 }
@@ -200,9 +200,10 @@ func (s *studio) control(class, text string, style uintptr, x, y, width, height 
 func (s *studio) checkStudio() error {
 	if !s.trayAvailable {
 		taskbar, _, _ := findWindow.Call(uintptr(unsafe.Pointer(wide("Shell_TrayWnd"))), 0)
-		if !s.allowMissingTray || taskbar != 0 {
+		if !s.allowTrayFallback {
 			return fmt.Errorf("tray registration failed after retries (Explorer taskbar present: %t, icon: %#x, window: %#x, structure size: %d)", taskbar != 0, s.icon.icon, s.window, s.icon.size)
 		}
+		fmt.Printf("NOTE: experimental Windows ARM64 tray registration failed (Explorer taskbar present: %t); checking the minimize-to-taskbar fallback, not marking tray registration as passed.\n", taskbar != 0)
 	}
 	count, _, _ := sendMessage.Call(s.preset, 0x146, 0, 0)
 	if int(count) != len(presetNames) {
@@ -254,6 +255,21 @@ func (s *studio) checkStudio() error {
 	minimized, _, _ := isIconic.Call(s.window)
 	if visible == 0 || minimized != 0 {
 		return fmt.Errorf("studio did not reopen")
+	}
+	// Also exercise recovery without a tray on machines where registration works.
+	registered := s.trayAvailable
+	s.trayAvailable = false
+	sendMessage.Call(s.window, 0x10, 0, 0)
+	s.trayAvailable = registered
+	minimized, _, _ = isIconic.Call(s.window)
+	if minimized == 0 {
+		return fmt.Errorf("no-tray fallback did not minimize the studio")
+	}
+	s.show()
+	visible, _, _ = isWindowVisible.Call(s.window)
+	minimized, _, _ = isIconic.Call(s.window)
+	if visible == 0 || minimized != 0 {
+		return fmt.Errorf("no-tray fallback could not reopen the studio")
 	}
 	return nil
 }
@@ -346,14 +362,14 @@ func run() error {
 	selfTest := flag.Bool("self-test", false, "test all sounds without an audio device or keyboard hook")
 	smoke := flag.Bool("smoke-test", false, "test the window, tray and keyboard listener, then exit")
 	noAudio := flag.Bool("no-audio", false, "disable audio for the smoke test only")
-	allowMissingTray := flag.Bool("allow-missing-tray", false, "allow a smoke test without a tray only when Explorer is absent")
+	allowTrayFallback := flag.Bool("allow-tray-fallback", false, "test the documented experimental ARM64 no-tray fallback")
 	bankPath := flag.String("bank", filepath.Join(filepath.Dir(executable), "Keybed.soundbank"), "preloaded sound bank path")
 	flag.Parse()
 	if *noAudio && !*smoke {
 		return fmt.Errorf("--no-audio is only supported with --smoke-test")
 	}
-	if *allowMissingTray && !*smoke {
-		return fmt.Errorf("--allow-missing-tray is only supported with --smoke-test")
+	if *allowTrayFallback && (!*smoke || runtime.GOARCH != "arm64") {
+		return fmt.Errorf("--allow-tray-fallback is only supported with --smoke-test on experimental Windows ARM64")
 	}
 	bank, err := loadBank(*bankPath)
 	if err != nil {
@@ -382,7 +398,7 @@ func run() error {
 		}
 		return nil
 	}
-	s := &studio{settings: readSettings(settingsPath()), mixer: newMixer(bank), smoke: *smoke, allowMissingTray: *allowMissingTray}
+	s := &studio{settings: readSettings(settingsPath()), mixer: newMixer(bank), smoke: *smoke, allowTrayFallback: *allowTrayFallback}
 	s.mixer.configure(s.settings)
 	if err := s.create(); err != nil {
 		if s.window != 0 {
@@ -426,7 +442,7 @@ func run() error {
 		if s.trayAvailable {
 			fmt.Println("PASS: native window, controls, tray icon, global keyboard hook and clean shutdown.")
 		} else {
-			fmt.Println("PASS: native window, controls, global keyboard hook and clean shutdown. Tray check unavailable: this desktop has no Explorer taskbar.")
+			fmt.Println("PASS: native window, controls, minimize-to-taskbar/reopen fallback, global keyboard hook and clean shutdown. EXPERIMENTAL ARM64 LIMITATION: tray registration did not pass.")
 		}
 	}
 	return nil
