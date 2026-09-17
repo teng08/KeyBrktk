@@ -41,6 +41,9 @@ jobs:
           codesign --verify --strict "$KEYBED_APP_OUTPUT"
       - name: Audio, typing-counter and sanitizer checks
         run: ./KeybedMac/test.sh
+      - name: Smoke-test Mac preset selection, scrolling and background studio lifecycle
+        run: |
+          python3 -c 'import os, subprocess; subprocess.run([os.environ["KEYBED_APP_OUTPUT"] + "/Contents/MacOS/Keybed", "--smoke-test", "--no-audio"], check=True, timeout=40)'
       - name: Export shared Windows sound bank
         run: |
           "$KEYBED_APP_OUTPUT/Contents/MacOS/Keybed" --export-windows-sounds "$PWD/dist/common/Keybed.soundbank"

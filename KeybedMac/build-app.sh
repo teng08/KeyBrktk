@@ -32,6 +32,9 @@ xcrun lipo -create "$BUILD_DIR/Keybed-x86_64" "$BUILD_DIR/Keybed-arm64" \
     -output "$STAGED_APP/Contents/MacOS/Keybed"
 xcrun lipo "$STAGED_APP/Contents/MacOS/Keybed" -verify_arch x86_64 arm64
 cp -R "$PROJECT_DIR/Sounds/Alpaca" "$STAGED_APP/Contents/Resources/Sounds/Alpaca"
+for SOUND_DIRECTORY in HolyPanda NovelKeysCreams TurquoiseTealios Mechanical; do
+    cp -R "$PROJECT_DIR/Sounds/$SOUND_DIRECTORY" "$STAGED_APP/Contents/Resources/Sounds/$SOUND_DIRECTORY"
+done
 mkdir -p "$STAGED_APP/Contents/Resources/Sounds/Tactile"
 cp "$PROJECT_DIR"/Sounds/Tactile/stav-tactile-*.mp3 "$STAGED_APP/Contents/Resources/Sounds/Tactile/"
 cp -R "$PROJECT_DIR/Sounds/BlueSwitch" "$STAGED_APP/Contents/Resources/Sounds/BlueSwitch"
@@ -51,8 +54,8 @@ cat > "$STAGED_APP/Contents/Info.plist" <<'PLIST'
 <key>CFBundleName</key><string>Keybed</string>
 <key>CFBundleIconFile</key><string>Keybed</string>
 <key>CFBundlePackageType</key><string>APPL</string>
-<key>CFBundleShortVersionString</key><string>3.3</string>
-<key>CFBundleVersion</key><string>7</string>
+<key>CFBundleShortVersionString</key><string>3.4</string>
+<key>CFBundleVersion</key><string>8</string>
 <key>LSUIElement</key><true/>
 <key>LSMinimumSystemVersion</key><string>11.0</string>
 <key>NSHighResolutionCapable</key><true/>

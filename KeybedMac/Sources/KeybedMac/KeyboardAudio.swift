@@ -60,6 +60,11 @@ final class KeyboardAudio {
 
     // Both desktop apps use the same decoded, normalized and processed samples.
     private static func decodedSamples(preset: SoundPreset, resourceURL: URL) throws -> [(String, [Float])] {
+            if let directory = preset.recordingDirectory {
+                return try SoundGenerator.names.map { name in
+                    (name, try Self.decode(resourceURL.appendingPathComponent(directory + "/" + name + ".mp3")))
+                }
+            }
             let decoded: [(String, [Float])]
             switch preset.id {
             case "skibiddy":
@@ -70,10 +75,6 @@ final class KeyboardAudio {
                         return (name, SoundGenerator.make(style: "bubble", key: name, variant: index))
                     }
                     return (name, SoundGenerator.reshape(vocals[index], key: name, variant: index))
-                }
-            case "alpaca":
-                decoded = try SoundGenerator.names.map { name in
-                    (name, try Self.decode(resourceURL.appendingPathComponent("Alpaca/" + name + ".mp3")))
                 }
             case "tactile", "blue":
                 let paths = preset.id == "tactile"
@@ -116,7 +117,8 @@ final class KeyboardAudio {
         }
         try FileManager.default.createDirectory(at: output.deletingLastPathComponent(), withIntermediateDirectories: true)
         try data.write(to: output, options: .atomic)
-        print("Exported 360 preloaded Windows samples to \(output.path).")
+        let count = SoundPreset.all.count * intensityNames.count * SoundGenerator.names.count
+        print("Exported \(count) preloaded Windows samples to \(output.path).")
     }
 
     deinit {

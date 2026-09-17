@@ -14,12 +14,13 @@ import (
 
 const sampleRate = 44100
 
-var presetNames = [...]string{"Alpaca Linear", "Tactile Brown", "Clicky Blue", "Deep Thock", "Creamy Marble", "Typewriter", "Bubble Pop", "Pixel Tap", "Birdy Chirp", "Skibiddy Toilet"}
+// Append presets so saved selections from earlier releases retain their meaning.
+var presetNames = [...]string{"Alpaca Linear", "Tactile Brown", "Clicky Blue", "Deep Thock", "Creamy Marble", "Typewriter", "Bubble Pop", "Pixel Tap", "Birdy Chirp", "Skibiddy Toilet", "Holy Pandas", "NovelKeys Creams", "Turquoise Tealios"}
 var intensityNames = [...]string{"Balanced", "Aggressive", "Extreme"}
 
 // Format: magic, sample rate, preset/mode/key counts, then length + float32 PCM
 // for each preset/mode/key. The Mac exporter supplies the exact production bank.
-type soundBank [10][3][12][]float32
+type soundBank [len(presetNames)][len(intensityNames)][12][]float32
 
 func readBank(reader io.Reader) (*soundBank, error) {
 	data, err := io.ReadAll(io.LimitReader(reader, 16*1024*1024+1))
@@ -32,9 +33,9 @@ func readBank(reader io.Reader) (*soundBank, error) {
 	if len(data) < 24 || string(data[:8]) != "KBPCM001" {
 		return nil, fmt.Errorf("invalid Keybed sound bank")
 	}
-	for i, want := range []uint32{sampleRate, 10, 3, 12} {
+	for i, want := range []uint32{sampleRate, uint32(len(presetNames)), uint32(len(intensityNames)), 12} {
 		if binary.LittleEndian.Uint32(data[8+i*4:12+i*4]) != want {
-			return nil, fmt.Errorf("unsupported sound bank dimensions")
+			return nil, fmt.Errorf("sound bank does not match this release (expected %d presets); extract the executable and sound bank from the same ZIP", len(presetNames))
 		}
 	}
 	bank := new(soundBank)

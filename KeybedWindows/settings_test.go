@@ -11,7 +11,7 @@ func TestSettingsPersistence(t *testing.T) {
 	if readSettings(path) != defaultSettings() {
 		t.Fatal("missing settings should use defaults")
 	}
-	want := settings{Preset: 9, Intensity: 2, Volume: 0, Muted: true, Releases: false}
+	want := settings{Preset: len(presetNames) - 1, Intensity: 2, Volume: 0, Muted: true, Releases: false}
 	if err := saveSettings(path, want); err != nil {
 		t.Fatal(err)
 	}

@@ -206,6 +206,11 @@ private func makeIcon(in directory: URL) throws {
     }
 }
 
+if CommandLine.arguments.contains("--no-audio") && !CommandLine.arguments.contains("--smoke-test") {
+    fputs("Keybed: --no-audio is only supported with --smoke-test.\n", stderr)
+    exit(1)
+}
+
 if CommandLine.arguments.contains("--close-studio") {
     DistributedNotificationCenter.default().postNotificationName(KeybedApp.closeStudioNotification,
         object: Bundle.main.bundlePath, userInfo: nil, deliverImmediately: true)

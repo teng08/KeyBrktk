@@ -13,10 +13,13 @@ warning. Only continue if you obtained the file from this repository and trust
 it; do not disable Windows security protections. Antivirus or organizational
 policies can restrict apps that observe global keyboard events.
 
-The native Sound Studio provides the same ten sound presets and three intensity
+The native Sound Studio provides the same thirteen sound presets and three intensity
 settings as the Mac app, along with volume, mute, key release sounds, sound
 preview and a three-second typing counter. Audio samples are preloaded and up to
 32 sounds can overlap. Settings persist in `%APPDATA%\Keybed\settings.json`.
+Holy Pandas, NovelKeys Creams and Turquoise Tealios use bundled recordings, with
+dedicated Space/Enter/Backspace and release samples. Original preset indices are
+preserved so settings from the earlier release still select the same sound.
 
 Closing the studio hides it and leaves keyboard sounds running. Double-click the
 notification-area icon to reopen it, or right-click the icon to mute, preview or
@@ -51,7 +54,7 @@ Run in PowerShell from the extracted folder:
 if ($LASTEXITCODE -ne 0) { throw "Keybed self-test failed" }
 ```
 
-This checks all 360 sounds through the production mixer without listening to
+This checks all 468 sounds through the production mixer without listening to
 the keyboard or requiring an audio device. It does not prove that your sound
 device, security policy or global hook works. For a real-device check, open
 Notepad, type, test Space/Enter/Delete, change presets, mute, hide/reopen the

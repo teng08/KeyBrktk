@@ -6,6 +6,7 @@ final class KeybedApp: NSObject, NSApplicationDelegate, NSWindowDelegate {
     private let typing = TypingActivity()
     private var hud: FloatingHUD!
     private var cards: [SoundCard] = []
+    private var libraryScroll: NSScrollView!
     private var soundItems: [NSMenuItem] = []
     private var overlayItem: NSMenuItem!
     private var overlayButton: NSButton!
@@ -15,6 +16,7 @@ final class KeybedApp: NSObject, NSApplicationDelegate, NSWindowDelegate {
     private var presetIndex = 0
     private var overlayEnabled = true
     private var isSmokeTest: Bool { ProcessInfo.processInfo.arguments.contains("--smoke-test") }
+    private var smokeWithoutAudio: Bool { isSmokeTest && ProcessInfo.processInfo.arguments.contains("--no-audio") }
     private var audio: KeyboardAudio?
     private var keyboard: KeyboardMonitor?
     private var localMonitor: Any?
@@ -74,7 +76,7 @@ final class KeybedApp: NSObject, NSApplicationDelegate, NSWindowDelegate {
             guard let resources = Bundle.main.resourceURL else { throw KeybedError(message: "The app's sound recordings are missing. Rebuild Keybed.") }
             audio = try KeyboardAudio(resourceURL: resources.appendingPathComponent("Sounds"))
             applySettings()
-            try audio?.start()
+            if !smokeWithoutAudio { try audio?.start() }
             keyboard = KeyboardMonitor(audio: audio!, typing: typing)
             keyboard?.setForeground(NSApp.isActive)
             if !isSmokeTest { keyboard?.start() }
@@ -122,9 +124,11 @@ final class KeybedApp: NSObject, NSApplicationDelegate, NSWindowDelegate {
         }
         if ProcessInfo.processInfo.arguments.contains("--smoke-test") {
             DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
-                guard self.audio?.isRunning == true,
+                guard self.audio != nil, (self.smokeWithoutAudio || self.audio?.isRunning == true),
                       let content = self.window.contentView,
                       self.cards.count == SoundPreset.all.count,
+                      let library = self.libraryScroll.documentView,
+                      self.cards.allSatisfy({ library.bounds.contains($0.frame) }),
                       content.subviews.allSatisfy({ view in
                           let rect = view.frame
                           return rect.minY >= 8 && rect.minX >= 8 && rect.maxX <= content.bounds.width - 8 && rect.maxY <= content.bounds.height - 8
@@ -135,12 +139,26 @@ final class KeybedApp: NSObject, NSApplicationDelegate, NSWindowDelegate {
                     exit(1)
                 }
                 let previousCount = self.typing.snapshot.count
-                self.selectSound(self.cards[9])
-                guard self.presetIndex == 9, self.hud.view.preset.id == "skibiddy",
-                      self.typing.snapshot.count == previousCount else {
-                    fputs("Keybed: sound selection or preview counter check failed.\n", stderr)
-                    exit(1)
+                for (index, card) in self.cards.enumerated() {
+                    guard !self.cards.enumerated().contains(where: { $0.offset != index && $0.element.frame.intersects(card.frame) }) else {
+                        fputs("Keybed: sound cards overlap.\n", stderr)
+                        exit(1)
+                    }
+                    _ = library.scrollToVisible(card.frame)
+                    self.libraryScroll.reflectScrolledClipView(self.libraryScroll.contentView)
+                    self.selectSound(card)
+                    guard self.libraryScroll.contentView.documentVisibleRect.contains(card.frame),
+                          self.presetIndex == index, self.hud.view.preset.id == card.preset.id,
+                          self.soundItems[index].state == .on,
+                          self.typing.snapshot.count == previousCount else {
+                        fputs("Keybed: scrolling, sound selection or preview counter check failed for \(card.preset.name).\n", stderr)
+                        exit(1)
+                    }
                 }
+                let smokePreset = SoundPreset.index(for: "turquoise")
+                self.selectSound(self.cards[smokePreset])
+                self.libraryScroll.contentView.scroll(to: .zero)
+                self.libraryScroll.reflectScrolledClipView(self.libraryScroll.contentView)
                 let screen = NSRect(x: -1_920, y: -180, width: 1_920, height: 1_080)
                 for cursor in [NSPoint(x: -1_920, y: -180), NSPoint(x: 0, y: 900)] {
                     let origin = FloatingHUD.origin(cursor: cursor, visibleFrame: screen, size: self.hud.panel.frame.size)
@@ -167,7 +185,7 @@ final class KeybedApp: NSObject, NSApplicationDelegate, NSWindowDelegate {
                     DispatchQueue.main.asyncAfter(deadline: .now() + 3.5) {
                         guard self.typing.snapshot.count == 0, self.countLabel.stringValue == "0",
                               self.hud.view.count == 0, self.hud.panel.frame.height <= 37,
-                              self.hud.view.preset.id == "skibiddy" else {
+                              self.hud.view.preset.id == "turquoise" else {
                             fputs("Keybed: timed reset/collapse failed: count=\(self.typing.snapshot.count), label=\(self.countLabel.stringValue), HUD=\(self.hud.view.count), height=\(self.hud.panel.frame.height), collapse=\(self.hud.view.collapse), sound=\(self.hud.view.preset.id).\n", stderr)
                             self.captureSnapshot(self.hud.view, argument: "--collapsed-hud-snapshot-output")
                             exit(1)
@@ -181,7 +199,7 @@ final class KeybedApp: NSObject, NSApplicationDelegate, NSWindowDelegate {
                         guard self.typing.snapshot.count == 0, self.countLabel.stringValue == "0" else { exit(1) }
                         self.window.performClose(nil)
                         DispatchQueue.main.asyncAfter(deadline: .now() + 1.2) {
-                            guard !self.window.isVisible, self.audio?.isRunning == true,
+                            guard !self.window.isVisible, (self.smokeWithoutAudio || self.audio?.isRunning == true),
                                   self.permissionTimer?.isValid == true, self.countTimer?.isValid == true,
                                   self.localMonitor != nil, self.activity != nil,
                                   !self.applicationShouldTerminateAfterLastWindowClosed(NSApp) else {
@@ -191,7 +209,8 @@ final class KeybedApp: NSObject, NSApplicationDelegate, NSWindowDelegate {
                             self.testSound(nil)
                             self.window.orderFront(nil)
                             guard self.window.isVisible else { exit(1) }
-                            print("PASS: \(SoundPreset.all.count) sounds, counting, idle collapse and overlay controls; close/reopen keeps audio, keyboard handler, timers and menu bar running.")
+                            print("PASS: \(SoundPreset.all.count) selectable sounds, scrolling, counting, idle collapse and overlay controls; close/reopen keeps keyboard handler, timers and menu bar running.")
+                            print(self.smokeWithoutAudio ? "NOTE: smoke test intentionally disables audio output; PCM is verified separately." : "PASS: audio engine stays running after closing and reopening the studio.")
                             NSApp.terminate(nil)
                         }
                     }
@@ -226,7 +245,7 @@ final class KeybedApp: NSObject, NSApplicationDelegate, NSWindowDelegate {
     }
 
     private func keepBackgroundServicesRunning() {
-        if audio?.isRunning != true { try? audio?.start() }
+        if !smokeWithoutAudio && audio?.isRunning != true { try? audio?.start() }
         if !isSmokeTest && keyboard?.isListening != true { keyboard?.start() }
         refreshGlobalFallback()
     }
@@ -351,21 +370,36 @@ final class KeybedApp: NSObject, NSApplicationDelegate, NSWindowDelegate {
         _ = label("3-SECOND COUNT", frame: NSRect(x: 581, y: 27, width: 148, height: 16), size: 9, weight: .bold)
         countLabel = label("0", frame: NSRect(x: 578, y: 46, width: 152, height: 35), size: 28, weight: .semibold, color: .white)
         countLabel.font = .monospacedDigitSystemFont(ofSize: 28, weight: .semibold)
-        _ = label("SOUND LIBRARY", frame: NSRect(x: 28, y: 116, width: 140, height: 16), size: 10, weight: .bold)
+        _ = label("SOUND LIBRARY · SCROLL", frame: NSRect(x: 28, y: 116, width: 140, height: 16), size: 10, weight: .bold)
         selectedSoundLabel = label("", frame: NSRect(x: 175, y: 113, width: 260, height: 20), size: 11, weight: .medium, color: accent)
         let tryField = NSTextField(frame: NSRect(x: 462, y: 108, width: 270, height: 25))
         tryField.placeholderString = "Type here to try your sound…"
         tryField.font = .systemFont(ofSize: 11)
         root.addSubview(tryField)
+        // Keep the new switches visible without growing the studio off laptop screens.
+        let featuredIndex = SoundPreset.index(for: "skibiddy")
+        let newIndices = SoundPreset.all.indices.filter { ["holypanda", "cream", "turquoise"].contains(SoundPreset.all[$0].id) }
+        let gridOrder = newIndices + SoundPreset.all.indices.filter { $0 != featuredIndex && !newIndices.contains($0) }
+        let gridPositions = Dictionary(uniqueKeysWithValues: gridOrder.enumerated().map { ($0.element, $0.offset) })
+        let rows = (gridOrder.count + 2) / 3
+        let library = StudioView(frame: NSRect(x: 0, y: 0, width: 704, height: 70 + rows * 70 - 8))
+        libraryScroll = NSScrollView(frame: NSRect(x: 28, y: 142, width: 704, height: 276))
+        libraryScroll.hasVerticalScroller = true
+        libraryScroll.autohidesScrollers = true
+        libraryScroll.scrollerStyle = .overlay
+        libraryScroll.drawsBackground = false
+        libraryScroll.documentView = library
+        root.addSubview(libraryScroll)
         for (index, preset) in SoundPreset.all.enumerated() {
-            let featured = index == SoundPreset.all.count - 1
+            let position = gridPositions[index] ?? 0
+            let featured = index == featuredIndex
             let cardFrame = featured
-                ? NSRect(x: 28, y: 142, width: 704, height: 62)
-                : NSRect(x: 28 + (index % 3) * 238, y: 212 + (index / 3) * 70, width: 228, height: 62)
+                ? NSRect(x: 0, y: 0, width: 704, height: 62)
+                : NSRect(x: (position % 3) * 238, y: 70 + (position / 3) * 70, width: 228, height: 62)
             let card = SoundCard(preset: preset, index: index, frame: cardFrame,
                 target: self, action: #selector(selectSound(_:)))
             cards.append(card)
-            root.addSubview(card)
+            library.addSubview(card)
         }
         _ = label("INTENSITY", frame: NSRect(x: 28, y: 443, width: 100, height: 18), size: 10, weight: .bold)
         intensityControl = NSSegmentedControl(labels: KeyboardAudio.intensityNames, trackingMode: .selectOne,
@@ -494,7 +528,10 @@ final class KeybedApp: NSObject, NSApplicationDelegate, NSWindowDelegate {
     private func updateStatus() {
         guard statusLabel != nil else { return }
         let text: String
-        if audio == nil || audio?.lastError != nil || audio?.isRunning != true {
+        if smokeWithoutAudio {
+            text = "Smoke test — audio output disabled"
+            detailLabel.stringValue = "Native controls and keyboard handlers are tested without requiring an audio device."
+        } else if audio == nil || audio?.lastError != nil || audio?.isRunning != true {
             text = "Sound engine needs attention"
             detailLabel.stringValue = audio?.lastError ?? "Quit and reopen Keybed to retry."
         } else if globalListening {
@@ -565,7 +602,7 @@ final class KeybedApp: NSObject, NSApplicationDelegate, NSWindowDelegate {
     }
     @objc private func toggleMute(_ sender: Any?) { muted.toggle(); applySettings() }
     @objc private func testSound(_ sender: Any?) {
-        if audio?.isRunning != true { try? audio?.start() }
+        if !smokeWithoutAudio && audio?.isRunning != true { try? audio?.start() }
         audio?.play(keyCode: 0)
         hud?.preview()
     }

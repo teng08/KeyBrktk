@@ -1,5 +1,11 @@
 ## Downloads
 
+This update adds **Holy Pandas, NovelKeys Creams and Turquoise Tealios** using
+recorded, MIT-licensed switch samples. Mac and Windows now share 13 presets and
+468 preloaded sounds, including dedicated Space/Enter/Backspace and releases.
+Previous saved sound selections retain their meaning. The Mac sound library
+scrolls to accommodate the additional cards.
+
 - **MacBook / Mac (Intel or Apple silicon):** `Keybed-macOS-universal.zip`.
   Extract it and drag `Keybed.app` into Applications. Requires macOS 11 or newer.
 - **Windows 10/11, Intel or AMD:** `Keybed-Windows-x64.zip`.
@@ -16,12 +22,15 @@ On Mac, grant **Input Monitoring** to the final Applications copy and reopen it
 if macOS requests it. If Gatekeeper blocks it and you trust the download, use
 the system's **Privacy & Security → Open Anyway** option when available.
 
-The Windows preview includes all ten presets, intensity, volume, mute, release
+The Windows preview includes all thirteen presets, intensity, volume, mute, release
 sounds, a native studio, a tray icon when available and a three-second counter. Its floating
 mouse-following HUD and automatic login setup are not yet ported.
 
 CI builds and checks the app on Intel macOS, Apple-silicon macOS, Windows x64 and
-Windows ARM64, including the production sound bank. Windows smoke tests check
+Windows ARM64, including all 468 production sounds, recording hashes/licenses,
+matching preset catalogs and settings compatibility. Mac smoke tests check all
+preset selections, scrolling, HUD/counting and close/reopen with audio output
+disabled. Windows smoke tests check
 native controls, hook installation, close/reopen and shutdown without an audio
 device. Windows x64 passes a strict tray check. **Known ARM64 limitation:** tray
 registration failed on its CI runner even with Explorer present. The experimental

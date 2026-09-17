@@ -213,10 +213,12 @@ func (s *studio) checkStudio() error {
 	if int(count) != len(intensityNames) {
 		return fmt.Errorf("intensity dropdown is incomplete")
 	}
-	sendMessage.Call(s.preset, 0x14e, 9, 0)
-	sendMessage.Call(s.window, 0x111, (1<<16)|idPreset, s.preset)
-	if s.settings.Preset != 9 || s.mixer.preset.Load() != 9 {
-		return fmt.Errorf("preset control did not configure audio")
+	for index, name := range presetNames {
+		sendMessage.Call(s.preset, 0x14e, uintptr(index), 0)
+		sendMessage.Call(s.window, 0x111, (1<<16)|idPreset, s.preset)
+		if s.settings.Preset != index || s.mixer.preset.Load() != int32(index) {
+			return fmt.Errorf("preset control did not configure audio for %s", name)
+		}
 	}
 	sendMessage.Call(s.intensity, 0x14e, 2, 0)
 	sendMessage.Call(s.window, 0x111, (1<<16)|idIntensity, s.intensity)

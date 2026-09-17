@@ -17,8 +17,21 @@ struct SoundPreset {
         .init(id: "bubble", name: "Bubble Pop", detail: "Tiny, playful water drops", symbol: "drop.fill", color: .init(srgbRed: 0.36, green: 0.86, blue: 0.77, alpha: 1)),
         .init(id: "pixel", name: "Pixel Tap", detail: "A little arcade in every key", symbol: "gamecontroller.fill", color: .init(srgbRed: 1, green: 0.48, blue: 0.65, alpha: 1)),
         .init(id: "birdy", name: "Birdy Chirp", detail: "Quick, cheerful little chirps", symbol: "music.note", color: .init(srgbRed: 0.75, green: 0.90, blue: 0.41, alpha: 1)),
-        .init(id: "skibiddy", name: "Skibiddy Toilet", detail: "Robot vocals · skibiddy, toilet, dop dop", symbol: "speaker.wave.2.fill", color: .init(srgbRed: 0.46, green: 0.95, blue: 0.65, alpha: 1))
+        .init(id: "skibiddy", name: "Skibiddy Toilet", detail: "Robot vocals · skibiddy, toilet, dop dop", symbol: "speaker.wave.2.fill", color: .init(srgbRed: 0.46, green: 0.95, blue: 0.65, alpha: 1)),
+        .init(id: "holypanda", name: "Holy Pandas", detail: "Recorded tactile pops & deep body", symbol: "pawprint.fill", color: .init(srgbRed: 1, green: 0.76, blue: 0.43, alpha: 1)),
+        .init(id: "cream", name: "NovelKeys Creams", detail: "Recorded warm, rounded clacks", symbol: "circle.fill", color: .init(srgbRed: 0.96, green: 0.88, blue: 0.69, alpha: 1)),
+        .init(id: "turquoise", name: "Turquoise Tealios", detail: "Recorded smooth, crisp taps", symbol: "diamond.fill", color: .init(srgbRed: 0.27, green: 0.87, blue: 0.88, alpha: 1))
     ]
+
+    var recordingDirectory: String? {
+        switch id {
+        case "alpaca": return "Alpaca"
+        case "holypanda": return "HolyPanda"
+        case "cream": return "NovelKeysCreams"
+        case "turquoise": return "TurquoiseTealios"
+        default: return nil
+        }
+    }
     static func index(for id: String?) -> Int { all.firstIndex { $0.id == id } ?? 0 }
 }
 

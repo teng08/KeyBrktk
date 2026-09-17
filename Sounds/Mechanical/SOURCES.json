@@ -1,0 +1,244 @@
+{
+  "sourceRepository": "https://github.com/tplai/kbsim",
+  "sourceCommit": "ba103f3b0afa9dab80447aa2e7e2ed80b6bd80e4",
+  "sourceLicense": "LICENSE.md",
+  "presets": [
+    {
+      "id": "holypanda",
+      "directory": "HolyPanda",
+      "name": "Holy Pandas",
+      "files": [
+        {
+          "file": "press_key1.mp3",
+          "sourcePath": "src/assets/audio/holypanda/press/GENERIC_R0.mp3",
+          "gitBlobSHA": "031b89b830610d4a3106b623e13b41414ca6967c",
+          "bytes": 2088
+        },
+        {
+          "file": "press_key2.mp3",
+          "sourcePath": "src/assets/audio/holypanda/press/GENERIC_R1.mp3",
+          "gitBlobSHA": "2a23c63aff2e2460d6e2bbc87ea7847dc49428ea",
+          "bytes": 2088
+        },
+        {
+          "file": "press_key3.mp3",
+          "sourcePath": "src/assets/audio/holypanda/press/GENERIC_R2.mp3",
+          "gitBlobSHA": "b31d2fb8c6044d091c127610e1d509655d854c62",
+          "bytes": 2088
+        },
+        {
+          "file": "press_key4.mp3",
+          "sourcePath": "src/assets/audio/holypanda/press/GENERIC_R3.mp3",
+          "gitBlobSHA": "a8367913a868f053a38a2c6fc0e78ddc56532360",
+          "bytes": 2088
+        },
+        {
+          "file": "press_key5.mp3",
+          "sourcePath": "src/assets/audio/holypanda/press/GENERIC_R4.mp3",
+          "gitBlobSHA": "96297b3e845f855613559ef8deb858c78aafd7da",
+          "bytes": 2088
+        },
+        {
+          "file": "press_space.mp3",
+          "sourcePath": "src/assets/audio/holypanda/press/SPACE.mp3",
+          "gitBlobSHA": "326dcca540da4c989826e61192a57cd2e6cbbcb9",
+          "bytes": 5850
+        },
+        {
+          "file": "press_enter.mp3",
+          "sourcePath": "src/assets/audio/holypanda/press/ENTER.mp3",
+          "gitBlobSHA": "ee1d7816d63eb9570d875ffbb6ede698d1fc90ca",
+          "bytes": 2088
+        },
+        {
+          "file": "press_back.mp3",
+          "sourcePath": "src/assets/audio/holypanda/press/BACKSPACE.mp3",
+          "gitBlobSHA": "4bfa1c7fe0e8c706c1cdd378f69f476de8a9c87e",
+          "bytes": 2088
+        },
+        {
+          "file": "release_key.mp3",
+          "sourcePath": "src/assets/audio/holypanda/release/GENERIC.mp3",
+          "gitBlobSHA": "3897e0da52a6b91b4a73720d1cb5de9fd24aa4c9",
+          "bytes": 2088
+        },
+        {
+          "file": "release_space.mp3",
+          "sourcePath": "src/assets/audio/holypanda/release/SPACE.mp3",
+          "gitBlobSHA": "556c2a0af04c5f1b36c2a8c81b6c3437b5d002cd",
+          "bytes": 1252
+        },
+        {
+          "file": "release_enter.mp3",
+          "sourcePath": "src/assets/audio/holypanda/release/ENTER.mp3",
+          "gitBlobSHA": "ca6618a00289a2614599b65509069bc25576b49b",
+          "bytes": 1252
+        },
+        {
+          "file": "release_back.mp3",
+          "sourcePath": "src/assets/audio/holypanda/release/BACKSPACE.mp3",
+          "gitBlobSHA": "f4df8a0ada161bb52812befe4373a3aac3edd643",
+          "bytes": 1670
+        }
+      ]
+    },
+    {
+      "id": "cream",
+      "directory": "NovelKeysCreams",
+      "name": "NovelKeys Creams",
+      "files": [
+        {
+          "file": "press_key1.mp3",
+          "sourcePath": "src/assets/audio/cream/press/GENERIC_R0.mp3",
+          "gitBlobSHA": "62c7d847740d8b453f3d2c4a6a2eb19f604bfd89",
+          "bytes": 2088
+        },
+        {
+          "file": "press_key2.mp3",
+          "sourcePath": "src/assets/audio/cream/press/GENERIC_R1.mp3",
+          "gitBlobSHA": "2ccc7f84c2d9c87043399dd3c670b6f56f15b7e5",
+          "bytes": 2088
+        },
+        {
+          "file": "press_key3.mp3",
+          "sourcePath": "src/assets/audio/cream/press/GENERIC_R2.mp3",
+          "gitBlobSHA": "f24ba508812c63c950f2d1f5bca6e18a0a5f34e0",
+          "bytes": 2088
+        },
+        {
+          "file": "press_key4.mp3",
+          "sourcePath": "src/assets/audio/cream/press/GENERIC_R3.mp3",
+          "gitBlobSHA": "6e647c5235e3003a29531ceede0c3fee455e1ee9",
+          "bytes": 2088
+        },
+        {
+          "file": "press_key5.mp3",
+          "sourcePath": "src/assets/audio/cream/press/GENERIC_R4.mp3",
+          "gitBlobSHA": "b3c9544eb4c0def831e1be26f6ac43f01304a140",
+          "bytes": 2088
+        },
+        {
+          "file": "press_space.mp3",
+          "sourcePath": "src/assets/audio/cream/press/SPACE.mp3",
+          "gitBlobSHA": "fb7fb8ea64e80f52737bb3671593dbf08de0b237",
+          "bytes": 2088
+        },
+        {
+          "file": "press_enter.mp3",
+          "sourcePath": "src/assets/audio/cream/press/ENTER.mp3",
+          "gitBlobSHA": "e49e835fe517bad1ea9f51c4c29caaf8471b8aff",
+          "bytes": 2088
+        },
+        {
+          "file": "press_back.mp3",
+          "sourcePath": "src/assets/audio/cream/press/BACKSPACE.mp3",
+          "gitBlobSHA": "1a78cabe7cd4b9e69d4fb49ed9e9d03a49b67f52",
+          "bytes": 2506
+        },
+        {
+          "file": "release_key.mp3",
+          "sourcePath": "src/assets/audio/cream/release/GENERIC.mp3",
+          "gitBlobSHA": "4da558aab76c6e0f3131bdb6d4fc0fad610c3516",
+          "bytes": 2088
+        },
+        {
+          "file": "release_space.mp3",
+          "sourcePath": "src/assets/audio/cream/release/SPACE.mp3",
+          "gitBlobSHA": "777c5ac3a8ef3e7f6a5663327f19e55f0c5636d5",
+          "bytes": 2088
+        },
+        {
+          "file": "release_enter.mp3",
+          "sourcePath": "src/assets/audio/cream/release/ENTER.mp3",
+          "gitBlobSHA": "defbcbb0c850f80b51cfa550c6cf5b6263067830",
+          "bytes": 2088
+        },
+        {
+          "file": "release_back.mp3",
+          "sourcePath": "src/assets/audio/cream/release/BACKSPACE.mp3",
+          "gitBlobSHA": "3ad32b9a7e401eb1634a05949b65674e2d22357a",
+          "bytes": 2088
+        }
+      ]
+    },
+    {
+      "id": "turquoise",
+      "directory": "TurquoiseTealios",
+      "name": "Turquoise Tealios",
+      "files": [
+        {
+          "file": "press_key1.mp3",
+          "sourcePath": "src/assets/audio/turquoise/press/GENERIC_R0.mp3",
+          "gitBlobSHA": "9c4d891210e423478fdddb4b551afb3be592e1f2",
+          "bytes": 2506
+        },
+        {
+          "file": "press_key2.mp3",
+          "sourcePath": "src/assets/audio/turquoise/press/GENERIC_R1.mp3",
+          "gitBlobSHA": "2ce90c35983fb023a849ccc4f301eee14feb5b0f",
+          "bytes": 2506
+        },
+        {
+          "file": "press_key3.mp3",
+          "sourcePath": "src/assets/audio/turquoise/press/GENERIC_R2.mp3",
+          "gitBlobSHA": "37ccdb4cd3ddb902e746722e4c8513c337662e28",
+          "bytes": 2506
+        },
+        {
+          "file": "press_key4.mp3",
+          "sourcePath": "src/assets/audio/turquoise/press/GENERIC_R3.mp3",
+          "gitBlobSHA": "a41d3a1a3ef12aa77393b517727e4372283acda6",
+          "bytes": 2506
+        },
+        {
+          "file": "press_key5.mp3",
+          "sourcePath": "src/assets/audio/turquoise/press/GENERIC_R4.mp3",
+          "gitBlobSHA": "af772ff0d64e4803004e13ff5fd07a083fee7187",
+          "bytes": 2506
+        },
+        {
+          "file": "press_space.mp3",
+          "sourcePath": "src/assets/audio/turquoise/press/SPACE.mp3",
+          "gitBlobSHA": "4cd97b5fd635e77a3721f1cf61455c57eaee7e1b",
+          "bytes": 2088
+        },
+        {
+          "file": "press_enter.mp3",
+          "sourcePath": "src/assets/audio/turquoise/press/ENTER.mp3",
+          "gitBlobSHA": "629943531d171b043f992bab7d60fa75d41f338d",
+          "bytes": 2506
+        },
+        {
+          "file": "press_back.mp3",
+          "sourcePath": "src/assets/audio/turquoise/press/BACKSPACE.mp3",
+          "gitBlobSHA": "69c6029e1fae3ebbbe5a634d71a38d45ee9607fb",
+          "bytes": 2088
+        },
+        {
+          "file": "release_key.mp3",
+          "sourcePath": "src/assets/audio/turquoise/release/GENERIC.mp3",
+          "gitBlobSHA": "7df554bf433196b64240f38f19a35c1f3d83e4d4",
+          "bytes": 1670
+        },
+        {
+          "file": "release_space.mp3",
+          "sourcePath": "src/assets/audio/turquoise/release/SPACE.mp3",
+          "gitBlobSHA": "10c5b6c4c94ba8ba6b3f90fb4b3a9c42520a9300",
+          "bytes": 1252
+        },
+        {
+          "file": "release_enter.mp3",
+          "sourcePath": "src/assets/audio/turquoise/release/ENTER.mp3",
+          "gitBlobSHA": "105035e7d4629da55017d47b3f29516e3eaccadf",
+          "bytes": 1670
+        },
+        {
+          "file": "release_back.mp3",
+          "sourcePath": "src/assets/audio/turquoise/release/BACKSPACE.mp3",
+          "gitBlobSHA": "e05b35f8e00d49e707f9bfa92a2cd27cbaf4effd",
+          "bytes": 1670
+        }
+      ]
+    }
+  ]
+}

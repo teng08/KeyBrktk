@@ -29,7 +29,7 @@ func testBank() *soundBank {
 func bankBytes(bank *soundBank) []byte {
 	var data bytes.Buffer
 	data.WriteString("KBPCM001")
-	for _, value := range []uint32{sampleRate, 10, 3, 12} {
+	for _, value := range []uint32{sampleRate, uint32(len(presetNames)), uint32(len(intensityNames)), 12} {
 		binary.Write(&data, binary.LittleEndian, value)
 	}
 	for p := range bank {
@@ -49,7 +49,7 @@ func TestSoundBankFormat(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if bank[9][2][11][0] != testBank()[9][2][11][0] {
+	if bank[len(presetNames)-1][2][11][0] != testBank()[len(presetNames)-1][2][11][0] {
 		t.Fatal("roundtrip changed PCM")
 	}
 	for _, end := range []int{0, 7, 23, 25, len(data) - 1} {
@@ -78,6 +78,11 @@ func TestSoundBankFormat(t *testing.T) {
 	}
 	if _, err := readBank(bytes.NewReader(append(data, 0))); err == nil {
 		t.Fatal("accepted trailing data")
+	}
+	legacy := append([]byte(nil), data...)
+	binary.LittleEndian.PutUint32(legacy[12:16], 10)
+	if _, err := readBank(bytes.NewReader(legacy)); err == nil {
+		t.Fatal("accepted a bank from the older 10-preset release")
 	}
 }
 
@@ -163,7 +168,7 @@ func TestConcurrentSettingsAndEvents(t *testing.T) {
 		go func() {
 			defer wait.Done()
 			for j := 0; j < 1000; j++ {
-				m.configure(settings{Preset: j % 10, Intensity: j % 3, Volume: 72})
+				m.configure(settings{Preset: j % len(presetNames), Intensity: j % len(intensityNames), Volume: 72})
 				m.enqueue(keyEvent{})
 			}
 		}()

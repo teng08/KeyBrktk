@@ -36,6 +36,10 @@ Copy-Item -LiteralPath (Join-Path $ProjectRoot "Sounds/CREDITS.md") -Destination
 $AlpacaCreditsDir = Join-Path $CreditsDir "Alpaca"
 New-Item -ItemType Directory -Path $AlpacaCreditsDir -Force | Out-Null
 Copy-Item -LiteralPath (Join-Path $ProjectRoot "Sounds/Alpaca/LICENSE") -Destination $AlpacaCreditsDir -Force
+$MechanicalCreditsDir = Join-Path $CreditsDir "Mechanical"
+New-Item -ItemType Directory -Path $MechanicalCreditsDir -Force | Out-Null
+Copy-Item -LiteralPath (Join-Path $ProjectRoot "Sounds/Mechanical/LICENSE") -Destination $MechanicalCreditsDir -Force
+Copy-Item -LiteralPath (Join-Path $ProjectRoot "Sounds/Mechanical/SOURCES.json") -Destination $MechanicalCreditsDir -Force
 $Archive = Join-Path $ProjectRoot "dist/Keybed-Windows-$Label.zip"
 Compress-Archive -Path (Join-Path $OutputDir "*") -DestinationPath $Archive -Force
 Write-Output "Built $Archive. Extract the entire ZIP before launching Keybed.exe."
