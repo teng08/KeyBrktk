@@ -13,9 +13,18 @@ warning. Only continue if you obtained the file from this repository and trust
 it; do not disable Windows security protections. Antivirus or organizational
 policies can restrict apps that observe global keyboard events.
 
-The native Sound Studio provides the same thirteen sound presets and three intensity
-settings as the Mac app, along with volume, mute, key release sounds, sound
-preview and a three-second typing counter. Audio samples are preloaded and up to
+The native Sound Studio now follows the **same dark design and layout as the Mac**:
+the heading, colored sound cards and selected badges, featured Skibiddy card,
+scrolling three-column library, three intensity buttons, volume, mute, release
+sounds, preview, reset count and a three-second typing counter. All thirteen
+presets have matching descriptions and accent colors. The new recorded switches
+are immediately visible. Try typing in the text field or another application.
+The studio scales for high-DPI displays, responds to monitor DPI changes and
+scrolls vertically on shorter screens so the bottom controls remain reachable.
+Native Windows title bars, buttons and scrollbars have platform-specific details;
+the app does not require a browser or WebView runtime.
+
+Audio samples are preloaded and up to
 32 sounds can overlap. Settings persist in `%APPDATA%\Keybed\settings.json`.
 Holy Pandas, NovelKeys Creams and Turquoise Tealios use bundled recordings, with
 dedicated Space/Enter/Backspace and release samples. Original preset indices are
@@ -40,10 +49,22 @@ timestamps are retained in memory. Software-injected keys are ignored.
 The listener is limited to the current interactive Windows desktop; sign-in,
 UAC's secure desktop and protected/elevated applications may not be observable.
 
-The Windows interface is native rather than a copy of the Mac studio.
-The Mac's mouse-following floating HUD and automatic login setup are not yet
-included in this Windows preview. To launch at login, you can add a shortcut
-to `Keybed.exe` to the user Startup folder (`shell:startup`).
+Enable **Floating counter follows my mouse** for the same small dark counter as
+on Mac. It shows the current sound, counts key-down events including repeats,
+resets its typing window every three seconds, and collapses after an idle pause.
+It is click-through, never takes focus and stays within the cursor's monitor work
+area. Closing/minimizing the studio does not stop the overlay or sounds. Mute
+still counts; previews and releases do not. **Reset count** clears the counter.
+Overlay visibility is saved with the other settings.
+
+**Start automatically when I log in** is off by default on Windows. Checking it
+registers this exact executable in the current user's Windows Run key and starts
+Keybed in the background at sign-in. Unchecking it removes that setting; no
+administrator access is needed. Keep the extracted app folder in its permanent
+location before enabling startup. A manually created Startup-folder shortcut
+from an older version is separate and must be removed manually if not wanted.
+Mac continues to use its existing login-agent and Input Monitoring integration;
+Windows installs its own keyboard hook instead of showing a Mac permission button.
 
 ## Verify the download
 
@@ -93,10 +114,15 @@ Pop-Location
 ```
 
 GitHub Actions builds and runs tests separately on Windows x64 and Windows ARM64.
-The CI smoke test checks native controls, keyboard-hook installation, close/reopen
+The CI smoke test clicks every sound card and intensity button, verifies scrolling
+and small-screen footer access, exercises 100/150/200% DPI layout changes, and
+checks floating-counter enable/disable, counting, idle collapse, focus and reset.
+Native screenshots are saved as workflow artifacts for visual review. It also
+checks keyboard-hook installation, close/reopen
 and shutdown with audio disabled, because hosted runners may not have a sound
 device. Windows x64 must also pass tray registration. The experimental ARM64
 smoke test explicitly permits the documented tray limitation, reports it and
 verifies the minimize/reopen fallback instead; it does not claim the tray works.
 Both builds also exercise the fallback when a working tray is present.
 Real-device playback still needs manual verification.
+Smoke tests never change the user's login setting or saved preferences.

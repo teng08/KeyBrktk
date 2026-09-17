@@ -11,7 +11,7 @@ func TestSettingsPersistence(t *testing.T) {
 	if readSettings(path) != defaultSettings() {
 		t.Fatal("missing settings should use defaults")
 	}
-	want := settings{Preset: len(presetNames) - 1, Intensity: 2, Volume: 0, Muted: true, Releases: false}
+	want := settings{Preset: len(presetNames) - 1, Intensity: 2, Volume: 0, Muted: true, Releases: false, Overlay: false}
 	if err := saveSettings(path, want); err != nil {
 		t.Fatal(err)
 	}
@@ -34,5 +34,8 @@ func TestSettingsPersistence(t *testing.T) {
 	got := readSettings(path)
 	if got.Preset != 0 || got.Intensity != 1 || got.Volume != 100 {
 		t.Fatal("invalid settings were not bounded")
+	}
+	if !got.Overlay {
+		t.Fatal("legacy settings should retain the new overlay default")
 	}
 }

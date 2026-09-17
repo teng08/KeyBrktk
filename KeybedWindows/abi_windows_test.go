@@ -14,6 +14,10 @@ func TestNative64BitLayouts(t *testing.T) {
 		"NOTIFYICONDATAW": {unsafe.Sizeof(iconData{}), 976},
 		"WAVEHDR":         {unsafe.Sizeof(waveHeader{}), 48},
 		"KBDLLHOOKSTRUCT": {unsafe.Sizeof(keyboardInfo{}), 24},
+		"DRAWITEMSTRUCT":  {unsafe.Sizeof(drawItem{}), 64},
+		"PAINTSTRUCT":     {unsafe.Sizeof(paintInfo{}), 72},
+		"SCROLLINFO":      {unsafe.Sizeof(scrollInfo{}), 28},
+		"MONITORINFO":     {unsafe.Sizeof(monitorInfo{}), 40},
 	} {
 		if layout.got != layout.want {
 			t.Fatalf("%s size %d, want %d", name, layout.got, layout.want)

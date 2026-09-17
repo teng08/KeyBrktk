@@ -16,8 +16,16 @@ The Mac binary contains both `x86_64` and `arm64`, so Apple-silicon MacBooks run
 natively without Rosetta. Extract it and drag `Keybed.app` into Applications.
 Windows users should **Extract All** and open `Keybed.exe`; keep the bundled
 `Keybed.soundbank` beside it. Neither prebuilt download requires Go or developer
-tools. See [Windows instructions](KeybedWindows/README.md) for details and
-the Windows preview's feature differences.
+tools. See [Windows instructions](KeybedWindows/README.md) for installation details.
+
+Both desktop apps share the **dark Sound Studio design**: matching colored sound
+cards, descriptions, selected badges, scrolling sound library, intensity, volume,
+release sounds, mute/preview, reset count and a mouse-following floating counter.
+Intel and Apple-silicon Macs use the same universal Mac app; Windows x64 and
+ARM64 use the matching native Windows studio. Windows also has the same startup
+checkbox, off by default, and a DPI-aware/short-screen layout. OS title bars and
+controls retain native differences. Mac needs Input Monitoring; Windows uses its
+keyboard hook and notification area rather than the Mac permission button/menu bar.
 
 The native Windows ARM64 build is **experimental**: tray registration failed on
 its CI runner even with Explorer present. If the tray is unavailable, Close
@@ -36,6 +44,7 @@ Windows ARM64. Automated sound/ABI/UI-hook smoke checks still need manual
 playback testing on real devices; CI does not prove every audio device or security
 policy works. The browser demo is separate and plays sounds only while its page
 is focused; it is not a replacement for either global desktop listener.
+Workflow artifacts include native Studio screenshots from all four build targets.
 
 ## Mac integration
 

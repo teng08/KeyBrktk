@@ -43,7 +43,13 @@ jobs:
         run: ./KeybedMac/test.sh
       - name: Smoke-test Mac preset selection, scrolling and background studio lifecycle
         run: |
-          python3 -c 'import os, subprocess; subprocess.run([os.environ["KEYBED_APP_OUTPUT"] + "/Contents/MacOS/Keybed", "--smoke-test", "--no-audio"], check=True, timeout=40)'
+          python3 -c 'import os, subprocess; subprocess.run([os.environ["KEYBED_APP_OUTPUT"] + "/Contents/MacOS/Keybed", "--smoke-test", "--no-audio", "--snapshot-output", os.path.abspath("dist/mac-studio.png"), "--hud-snapshot-output", os.path.abspath("dist/mac-hud.png")], check=True, timeout=40)'
+      - name: Upload Mac studio and floating-counter snapshots
+        uses: actions/upload-artifact@v7
+        with:
+          name: UI-macOS-${{ matrix.runner }}
+          path: dist/mac-*.png
+          if-no-files-found: error
       - name: Export shared Windows sound bank
         run: |
           "$KEYBED_APP_OUTPUT/Contents/MacOS/Keybed" --export-windows-sounds "$PWD/dist/common/Keybed.soundbank"
@@ -83,11 +89,11 @@ jobs:
           - runner: windows-latest
             arch: amd64
             label: x64
-            smoke_args: "'--smoke-test', '--no-audio'"
+            smoke_args: "'--smoke-test', '--no-audio', '--screenshot', 'dist/windows-x64-studio.png'"
           - runner: windows-11-arm
             arch: arm64
             label: arm64
-            smoke_args: "'--smoke-test', '--no-audio', '--allow-tray-fallback'"
+            smoke_args: "'--smoke-test', '--no-audio', '--allow-tray-fallback', '--screenshot', 'dist/windows-arm64-studio.png'"
     runs-on: ${{ matrix.runner }}
     timeout-minutes: 15
     steps:
@@ -118,12 +124,18 @@ jobs:
           $app = Join-Path $PWD 'dist/windows-${{ matrix.label }}/Keybed.exe'
           $process = Start-Process -FilePath $app -ArgumentList '--self-test' -Wait -PassThru -NoNewWindow
           if ($process.ExitCode -ne 0) { throw "Packaged Windows sound check failed: $($process.ExitCode)" }
-      - name: Smoke-test controls, keyboard hook and tray or experimental ARM fallback
+      - name: Smoke-test matching studio, scrolling, DPI, floating counter and background lifecycle
         run: |
           $app = Join-Path $PWD 'dist/windows-${{ matrix.label }}/Keybed.exe'
           $process = Start-Process -FilePath $app -ArgumentList ${{ matrix.smoke_args }} -PassThru -NoNewWindow
           if (-not $process.WaitForExit(30000)) { $process.Kill(); throw "Windows smoke test timed out" }
           if ($process.ExitCode -ne 0) { throw "Windows smoke test failed: $($process.ExitCode)" }
+      - name: Upload native Windows studio snapshot
+        uses: actions/upload-artifact@v7
+        with:
+          name: UI-Windows-${{ matrix.label }}
+          path: dist/windows-${{ matrix.label }}-studio.png
+          if-no-files-found: error
       - uses: actions/upload-artifact@v7
         with:
           name: Keybed-Windows-${{ matrix.label }}
@@ -145,6 +157,7 @@ jobs:
         with:
           path: downloads
           merge-multiple: true
+          pattern: Keybed-*
       - name: Create checksums
         working-directory: downloads
         run: sha256sum Keybed-macOS-universal.zip Keybed-Windows-x64.zip Keybed-Windows-arm64.zip Keybed.soundbank > SHA256SUMS.txt

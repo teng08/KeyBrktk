@@ -230,11 +230,22 @@ func (c *typingCounter) record(now time.Time) {
 }
 
 func (c *typingCounter) snapshot(now time.Time) int {
+	count, _ := c.activity(now)
+	return count
+}
+
+func (c *typingCounter) activity(now time.Time) (int, time.Time) {
 	c.mu.Lock()
 	defer c.mu.Unlock()
 	if !c.start.IsZero() && now.Sub(c.start) >= 3*time.Second {
 		c.count = 0
 		c.start = time.Time{}
 	}
-	return c.count
+	return c.count, c.last
+}
+
+func (c *typingCounter) reset() {
+	c.mu.Lock()
+	c.count, c.start, c.last = 0, time.Time{}, time.Time{}
+	c.mu.Unlock()
 }

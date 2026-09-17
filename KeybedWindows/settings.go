@@ -12,9 +12,12 @@ type settings struct {
 	Volume    int  `json:"volume"`
 	Muted     bool `json:"muted"`
 	Releases  bool `json:"releases"`
+	Overlay   bool `json:"overlay"`
 }
 
-func defaultSettings() settings { return settings{Intensity: 1, Volume: 72, Releases: true} }
+func defaultSettings() settings {
+	return settings{Intensity: 1, Volume: 72, Releases: true, Overlay: true}
+}
 func (s *settings) sanitize() {
 	if s.Preset < 0 || s.Preset >= len(presetNames) {
 		s.Preset = 0
