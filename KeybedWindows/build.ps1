@@ -1,5 +1,5 @@
 param(
-    [ValidateSet("amd64", "arm64")]
+    [ValidateSet("386", "amd64", "arm64")]
     [string]$Architecture = "amd64",
     [string]$SoundBank = ""
 )
@@ -9,7 +9,11 @@ if (-not $SoundBank) { $SoundBank = Join-Path $ProjectRoot "dist/common/Keybed.s
 if (-not (Test-Path -LiteralPath $SoundBank -PathType Leaf)) {
     throw "Missing Keybed.soundbank. Download it from a release or export it on a Mac as described in README.md."
 }
-$Label = if ($Architecture -eq "amd64") { "x64" } else { "arm64" }
+$Label = switch ($Architecture) {
+    "386" { "compatible" }
+    "amd64" { "x64" }
+    "arm64" { "arm64" }
+}
 $OutputDir = Join-Path $ProjectRoot "dist/windows-$Label"
 New-Item -ItemType Directory -Path $OutputDir -Force | Out-Null
 $AssetDir = Join-Path $PSScriptRoot "assets"

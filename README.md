@@ -8,9 +8,10 @@ Prebuilt preview downloads are published in
 
 | Device | Download | Minimum system |
 | --- | --- | --- |
-| Intel Mac or Apple-silicon MacBook/Mac | [Download Mac app (.dmg)](https://github.com/teng08/KeyBrktk/releases/download/v3.6.0-preview.1/Keybed-macOS-universal.dmg) | macOS 11 |
-| Intel/AMD Windows PC | [Download Windows app (.exe)](https://github.com/teng08/KeyBrktk/releases/download/v3.6.0-preview.1/Keybed-Windows-x64.exe) | Windows 10 |
-| Windows-on-ARM PC (experimental) | [Download Windows ARM app (.exe)](https://github.com/teng08/KeyBrktk/releases/download/v3.6.0-preview.1/Keybed-Windows-arm64.exe) | Windows 11 |
+| Intel Mac or Apple-silicon MacBook/Mac | [Download Mac app (.dmg)](https://github.com/teng08/KeyBrktk/releases/download/v3.6.1-preview.1/Keybed-macOS-universal.dmg) | macOS 11 |
+| Most Windows PCs (easy-to-share compatibility build) | [Download compatible Windows app (.exe)](https://github.com/teng08/KeyBrktk/releases/download/v3.6.1-preview.1/Keybed-Windows-compatible.exe) | Windows 10/11, 32- or 64-bit Intel/AMD |
+| Intel/AMD Windows PC | [Download native 64-bit Windows app (.exe)](https://github.com/teng08/KeyBrktk/releases/download/v3.6.1-preview.1/Keybed-Windows-x64.exe) | Windows 10/11 x64 |
+| Windows-on-ARM PC (experimental) | [Download Windows ARM app (.exe)](https://github.com/teng08/KeyBrktk/releases/download/v3.6.1-preview.1/Keybed-Windows-arm64.exe) | Windows 11 |
 
 The Mac binary contains both `x86_64` and `arm64`, so Apple-silicon MacBooks run
 natively without Rosetta. **Mac:** open the DMG, drag Keybed onto Applications,
@@ -19,6 +20,10 @@ and quit/reopen when macOS asks. If updating, quit the old app before replacing 
 **Windows:** save the EXE in a permanent folder and double-click it. Sounds and
 full license notices are built into this single file; no sound-bank download,
 extraction, installer, Go, .NET, or administrator installation is required.
+The `compatible` download is a 32-bit executable that also runs on normal 64-bit
+Intel/AMD Windows, making it the simplest single file to share. The native `x64`
+download remains preferable when the recipient's PC type is known. Windows on
+ARM should use the experimental `arm64` download.
 ZIP downloads remain available as alternatives. Mac ZIPs contain `Keybed.app`;
 Windows ZIPs contain the same standalone EXE plus readable credits/instructions.
 Older Windows releases (3.5 and earlier) still require their sidecar sound bank.
@@ -45,12 +50,12 @@ Only run downloads you trust, and do not disable system security protections.
 Developer ID signing/notarization and Windows code-signing certificates are
 needed for a smoother public installation experience.
 
-GitHub Actions builds and tests Intel and Apple-silicon Macs, Windows x64 and
-Windows ARM64. Automated sound/ABI/UI-hook smoke checks still need manual
+GitHub Actions builds and tests Intel and Apple-silicon Macs, Windows compatible
+(32-bit x86), x64 and ARM64. Automated sound/ABI/UI-hook smoke checks still need manual
 playback testing on real devices; CI does not prove every audio device or security
 policy works. The browser demo is separate and plays sounds only while its page
 is focused; it is not a replacement for either global desktop listener.
-Workflow artifacts include native Studio screenshots from all four build targets.
+Workflow artifacts include native Studio screenshots from all five build targets.
 
 ## Mac integration
 
@@ -191,8 +196,9 @@ in [Sounds/CREDITS.md](Sounds/CREDITS.md).
 requests and manual workflow dispatches. Successful runs include downloadable
 app ZIP artifacts. Pushing a new `v*` tag also publishes a preview GitHub Release,
 but only after every platform check succeeds; it never overwrites an existing
-release. Artifacts include the universal Mac DMG/ZIP, single-file Windows x64/ARM64
-EXEs and optional ZIPs, a developer-only sound bank, and SHA-256 checksums.
+release. Artifacts include the universal Mac DMG/ZIP, single-file Windows
+compatible/x64/ARM64 EXEs and optional ZIPs, a developer-only sound bank, and
+SHA-256 checksums.
 The Mac packaging step mounts the finished DMG read-only and verifies both
 architectures, signatures, sounds and bundled license. Windows tests copy just
 the EXE into an otherwise empty folder before sound and native UI smoke checks.

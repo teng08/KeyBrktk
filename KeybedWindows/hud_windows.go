@@ -90,8 +90,8 @@ func (s *studio) tickHUD(now time.Time) {
 	height := int(math.Round(66 - s.hudCollapse*30))
 	var point [2]int32
 	getCursorPos.Call(uintptr(unsafe.Pointer(&point)))
-	packed := uintptr(uint64(uint32(point[0])) | uint64(uint32(point[1]))<<32)
-	monitor, _, _ := monitorFromPoint.Call(packed, 2)
+	pointRect := nativeRect{left: point[0], top: point[1], right: point[0] + 1, bottom: point[1] + 1}
+	monitor, _, _ := monitorFromRect.Call(uintptr(unsafe.Pointer(&pointRect)), 2)
 	info := monitorInfo{size: uint32(unsafe.Sizeof(monitorInfo{}))}
 	getMonitorInfo.Call(monitor, uintptr(unsafe.Pointer(&info)))
 	r := info.work

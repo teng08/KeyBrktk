@@ -1,6 +1,9 @@
 # Keybed for Windows (preview)
 
-Download `Keybed-Windows-x64.exe` for Intel/AMD PCs running Windows 10 or 11,
+Download `Keybed-Windows-compatible.exe` when you want one easy-to-share file
+for 32- or 64-bit Intel/AMD PCs running Windows 10 or 11. It is a 32-bit app and
+runs through Windows' built-in compatibility layer on 64-bit PCs. Download
+`Keybed-Windows-x64.exe` for the native 64-bit Intel/AMD build,
 or the **experimental** `Keybed-Windows-arm64.exe` for Windows 11 on ARM, from
 [GitHub Releases](https://github.com/teng08/KeyBrktk/releases).
 
@@ -113,6 +116,8 @@ On Windows, from the repository root:
 
 ```powershell
 .\KeybedWindows\build.ps1
+# One-file 32-/64-bit Intel/AMD compatibility build:
+.\KeybedWindows\build.ps1 -Architecture 386
 # Experimental native Windows-on-ARM package:
 .\KeybedWindows\build.ps1 -Architecture arm64
 
@@ -122,7 +127,8 @@ go test ./...
 Pop-Location
 ```
 
-GitHub Actions builds and runs tests separately on Windows x64 and Windows ARM64.
+GitHub Actions builds and runs tests separately on Windows x86 compatibility,
+x64 and ARM64.
 The release EXE is tested alone in an empty folder, without its ZIP, credits
 folder or a sidecar bank. Tests also compare its embedded bank and full notices
 byte-for-byte with the source/export, and open/resize/close the credits viewer.

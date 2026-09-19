@@ -27,7 +27,7 @@ var (
 	getScrollInfo        = user32.NewProc("GetScrollInfo")
 	setScrollInfo        = user32.NewProc("SetScrollInfo")
 	monitorFromWindow    = user32.NewProc("MonitorFromWindow")
-	monitorFromPoint     = user32.NewProc("MonitorFromPoint")
+	monitorFromRect      = user32.NewProc("MonitorFromRect")
 	getMonitorInfo       = user32.NewProc("GetMonitorInfoW")
 	getDPI               = user32.NewProc("GetDpiForWindow")
 	getSystemDPI         = user32.NewProc("GetDpiForSystem")

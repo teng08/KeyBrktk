@@ -7,6 +7,10 @@
   Applications. Requires macOS 11 or newer. Quit the old app before updating.
 - **Windows 10/11, Intel or AMD:** `Keybed-Windows-x64.exe`.
   Save it in a permanent folder and double-click it.
+- **Windows 10/11 compatibility (32- or 64-bit Intel/AMD):**
+  `Keybed-Windows-compatible.exe`. This 32-bit build also runs on ordinary
+  64-bit Windows and is the simplest single file to share when the PC type is
+  unknown.
 - **Windows 11 on ARM (experimental):** `Keybed-Windows-arm64.exe`.
   This version has the same standalone packaging, with the tray limitation below.
 
@@ -42,8 +46,8 @@ Windows login startup is off by default; enable it after placing the EXE
 in its permanent location. The floating counter is optional and its
 visibility persists. Close keeps the sounds and overlay running; use Quit to stop.
 
-CI builds and checks the app on Intel macOS, Apple-silicon macOS, Windows x64 and
-Windows ARM64, including all 468 production sounds, recording hashes/licenses,
+CI builds and checks the app on Intel macOS, Apple-silicon macOS, Windows x86
+compatibility, x64 and ARM64, including all 468 production sounds, recording hashes/licenses,
 matching preset catalogs and settings compatibility.
 The finished Mac DMG is verified, mounted read-only, and its bundled app passes
 signature, architecture, license and sound checks. The Windows release EXE is

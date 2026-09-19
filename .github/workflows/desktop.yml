@@ -89,6 +89,10 @@ jobs:
       matrix:
         include:
           - runner: windows-latest
+            arch: '386'
+            label: compatible
+            smoke_args: "'--smoke-test', '--no-audio', '--screenshot', 'dist/windows-compatible-studio.png'"
+          - runner: windows-latest
             arch: amd64
             label: x64
             smoke_args: "'--smoke-test', '--no-audio', '--screenshot', 'dist/windows-x64-studio.png'"
@@ -98,6 +102,9 @@ jobs:
             smoke_args: "'--smoke-test', '--no-audio', '--allow-tray-fallback', '--screenshot', 'dist/windows-arm64-studio.png'"
     runs-on: ${{ matrix.runner }}
     timeout-minutes: 15
+    env:
+      GOARCH: ${{ matrix.arch }}
+      CGO_ENABLED: '0'
     steps:
       - uses: actions/checkout@v7
         with:
@@ -185,7 +192,7 @@ jobs:
           pattern: Keybed-*
       - name: Create checksums
         working-directory: downloads
-        run: sha256sum Keybed-macOS-universal.dmg Keybed-macOS-universal.zip Keybed-Windows-x64.exe Keybed-Windows-x64.zip Keybed-Windows-arm64.exe Keybed-Windows-arm64.zip Keybed.soundbank > SHA256SUMS.txt
+        run: sha256sum Keybed-macOS-universal.dmg Keybed-macOS-universal.zip Keybed-Windows-compatible.exe Keybed-Windows-compatible.zip Keybed-Windows-x64.exe Keybed-Windows-x64.zip Keybed-Windows-arm64.exe Keybed-Windows-arm64.zip Keybed.soundbank > SHA256SUMS.txt
       - name: Publish only after all platform checks pass
         env:
           GH_TOKEN: ${{ github.token }}
@@ -194,6 +201,8 @@ jobs:
           gh release create "$RELEASE_TAG" \
             downloads/Keybed-macOS-universal.dmg \
             downloads/Keybed-macOS-universal.zip \
+            downloads/Keybed-Windows-compatible.exe \
+            downloads/Keybed-Windows-compatible.zip \
             downloads/Keybed-Windows-x64.exe \
             downloads/Keybed-Windows-x64.zip \
             downloads/Keybed-Windows-arm64.exe \
