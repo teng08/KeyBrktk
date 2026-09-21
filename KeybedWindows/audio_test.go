@@ -140,6 +140,22 @@ func TestMixerSettingsAndKeyMapping(t *testing.T) {
 	}
 }
 
+func TestKeyStateIgnoresHeldKeyRepeats(t *testing.T) {
+	var state keyState
+	if !state.press(65) || state.press(65) {
+		t.Fatal("held key was not limited to its first key-down")
+	}
+	if !state.release(65) || state.release(65) {
+		t.Fatal("key release did not end exactly one press cycle")
+	}
+	if !state.press(65) {
+		t.Fatal("key did not re-arm after release")
+	}
+	if state.press(256) || state.release(256) {
+		t.Fatal("out-of-range key changed state")
+	}
+}
+
 func TestOverlappingVoicesAndAllocationFreeRender(t *testing.T) {
 	m := newMixer(testBank())
 	m.configure(settings{Volume: 100})

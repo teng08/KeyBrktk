@@ -33,6 +33,11 @@ Both desktop apps include 13 presets and 468 preloaded sounds, including recorde
 Holy Pandas, NovelKeys Creams and Turquoise Tealios, dedicated Space/Enter/Backspace
 and releases. Previous saved sound selections retain their meaning.
 
+Held keys now sound and count only once until released, matching a physical
+keyboard switch instead of stacking operating-system auto-repeat sounds. Windows
+also uses smaller audio blocks for faster response, while both desktop apps
+continue to preload their sounds before typing.
+
 These are preview downloads. The Mac app is locally/ad-hoc signed, not Developer
 ID signed or notarized, and the Windows executables are unsigned. Your system
 may warn about an unknown publisher. Download only from this repository, verify

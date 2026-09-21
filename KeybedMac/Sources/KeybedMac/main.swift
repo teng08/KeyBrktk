@@ -111,9 +111,12 @@ final class KeyboardMonitor {
                     monitor.recordEvent()
                     let code = UInt16(event.getIntegerValueField(.keyboardEventKeycode))
                     if type == .keyDown {
-                        monitor.pressed.insert(code)
-                        monitor.audio.play(keyCode: code)
-                        monitor.typing.record()
+                        // macOS sends more key-down events while a key is held.
+                        // Sound and count only the physical down/up cycle once.
+                        if monitor.pressed.insert(code).inserted {
+                            monitor.audio.play(keyCode: code)
+                            monitor.typing.record()
+                        }
                     } else if monitor.pressed.remove(code) != nil {
                         monitor.audio.play(keyCode: code, release: true)
                     }
@@ -152,6 +155,8 @@ final class KeyboardMonitor {
 
     private func reenable() {
         lock.lock()
+        // A disabled tap can miss key-up, so do not leave a key stuck as held.
+        pressed.removeAll()
         if let tap, !stopping { CGEvent.tapEnable(tap: tap, enable: true) }
         lock.unlock()
     }

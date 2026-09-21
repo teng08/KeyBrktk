@@ -66,7 +66,9 @@ func streamOutput(m *mixer, stop <-chan struct{}, status *atomic.Value) error {
 	if result != 0 {
 		return fmt.Errorf("open output device: code %d", result)
 	}
-	const framesPerBuffer = 256
+	// Three 128-frame buffers keep headroom for legacy waveOut drivers while
+	// halving the queued playback latency from the previous 256-frame blocks.
+	const framesPerBuffer = 128
 	headerSize := unsafe.Sizeof(waveHeader{})
 	var blocks [3]uintptr
 	var prepared [3]bool

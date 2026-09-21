@@ -38,7 +38,7 @@ func startKeyboard(m *mixer, counter *typingCounter) (*keyboardListener, error) 
 		runtime.LockOSThread()
 		defer runtime.UnlockOSThread()
 		defer close(listener.done)
-		var pressed [256]bool
+		var pressed keyState
 		callback := syscall.NewCallback(func(code, message, data uintptr) uintptr {
 			if int32(code) == 0 {
 				info := (*keyboardInfo)(unsafe.Pointer(data))
@@ -46,13 +46,13 @@ func startKeyboard(m *mixer, counter *typingCounter) (*keyboardListener, error) 
 				if info.key < 256 && info.flags&0x10 == 0 {
 					switch message {
 					case 0x100, 0x104:
-						pressed[info.key] = true
-						counter.record(time.Now())
-						m.enqueue(keyEvent{kind: classifyKey(info.key)})
+						if pressed.press(info.key) {
+							counter.record(time.Now())
+							m.enqueue(keyEvent{kind: classifyKey(info.key)})
+						}
 					case 0x101, 0x105:
-						if pressed[info.key] {
+						if pressed.release(info.key) {
 							m.enqueue(keyEvent{kind: classifyKey(info.key), release: true})
-							pressed[info.key] = false
 						}
 					}
 				}

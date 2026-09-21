@@ -124,7 +124,8 @@ Enter, Delete and release sounds, not renamed synthesized profiles. Scroll the
 Mac sound library to reach all cards. Existing saved selections stay unchanged.
 
 The animated floating counter follows your **mouse pointer**, displays the
-current sound and counts key-down events, including held-key repeats. It is
+current sound and counts each physical key press once. Holding a key does not
+retrigger its sound or increase the count until that key is released. It is
 click-through and never takes keyboard focus. The count resets every **3 seconds** from the first key of each typing window,
 even during continuous typing. After **3 seconds without typing**, the counter
 collapses to a small badge showing your sound; typing expands it again.
@@ -144,7 +145,8 @@ memory. All 468 preset/intensity/key combinations are preloaded. MP3 decoding,
 synthesis, silence trimming, normalization and tone processing happen at startup.
 A dedicated keyboard event thread feeds the audio callback, which
 does not allocate memory or wait for a mutex. Playback starts in the next audio
-block; actual audible latency depends on the output device. Bluetooth audio adds
+block, and Windows uses small interactive output buffers; actual audible latency
+depends on the output device. Bluetooth audio adds
 its own latency. Keybed does not save or transmit what you type.
 
 ## Rebuild

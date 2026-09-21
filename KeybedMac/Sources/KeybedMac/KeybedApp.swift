@@ -176,8 +176,8 @@ final class KeybedApp: NSObject, NSApplicationDelegate, NSWindowDelegate {
                     _ = self.processLocalEvent(event)
                 }
                 DispatchQueue.main.asyncAfter(deadline: .now() + 0.25) {
-                    guard self.typing.snapshot.count == previousCount + 2 else {
-                        fputs("Keybed: key event count failed: actual=\(self.typing.snapshot.count), expected=\(previousCount + 2).\n", stderr)
+                    guard self.typing.snapshot.count == previousCount + 1 else {
+                        fputs("Keybed: held-key repeat was counted: actual=\(self.typing.snapshot.count), expected=\(previousCount + 1).\n", stderr)
                         exit(1)
                     }
                     self.captureSnapshot(self.window.contentView!, argument: "--snapshot-output")
@@ -265,9 +265,10 @@ final class KeybedApp: NSObject, NSApplicationDelegate, NSWindowDelegate {
         guard keyboard?.isListening != true else { return event }
         if isSmokeTest && event.timestamp != 0 { return event }
         if event.type == .keyDown {
-            localPressed.insert(event.keyCode)
-            audio?.play(keyCode: event.keyCode)
-            typing.record()
+            if localPressed.insert(event.keyCode).inserted {
+                audio?.play(keyCode: event.keyCode)
+                typing.record()
+            }
         } else if event.type == .keyUp && localPressed.remove(event.keyCode) != nil {
             audio?.play(keyCode: event.keyCode, release: true)
         }
@@ -281,9 +282,10 @@ final class KeybedApp: NSObject, NSApplicationDelegate, NSWindowDelegate {
                 guard let self, self.keyboard?.isListening != true else { return }
                 self.fallbackEventCount += 1
                 if event.type == .keyDown {
-                    self.fallbackPressed.insert(event.keyCode)
-                    self.audio?.play(keyCode: event.keyCode)
-                    self.typing.record()
+                    if self.fallbackPressed.insert(event.keyCode).inserted {
+                        self.audio?.play(keyCode: event.keyCode)
+                        self.typing.record()
+                    }
                 } else if self.fallbackPressed.remove(event.keyCode) != nil {
                     self.audio?.play(keyCode: event.keyCode, release: true)
                 }

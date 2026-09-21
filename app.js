@@ -11,29 +11,38 @@ let muted = false;
 let keystrokes = 0;
 let audioContext;
 let masterGain;
+let noiseBuffer;
+const noiseBufferSeconds = 0.32;
+const pressedKeys = new Set();
+const allowedKeys = new Set(['Q','W','E','R','T','Y','U','I','O','P','A','S','D','F','G','H','J','K','L','Z','X','C','V','B','N','M','BACKSPACE','ENTER','SHIFT','SPACE']);
 
 const getAudio = () => {
   if (!audioContext) {
-    audioContext = new (window.AudioContext || window.webkitAudioContext)();
+    const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+    try {
+      audioContext = new AudioContextClass({ latencyHint: 'interactive' });
+    } catch (_) {
+      audioContext = new AudioContextClass();
+    }
     masterGain = audioContext.createGain();
     masterGain.gain.value = volume;
     masterGain.connect(audioContext.destination);
+    noiseBuffer = audioContext.createBuffer(1, audioContext.sampleRate * noiseBufferSeconds, audioContext.sampleRate);
+    const noise = noiseBuffer.getChannelData(0);
+    for (let index = 0; index < noise.length; index += 1) noise[index] = Math.random() * 2 - 1;
   }
   if (audioContext.state === 'suspended') audioContext.resume();
 };
 
 function noiseBurst(time, duration, gainAmount, filterFrequency) {
-  const buffer = audioContext.createBuffer(1, audioContext.sampleRate * duration, audioContext.sampleRate);
-  const data = buffer.getChannelData(0);
-  for (let index = 0; index < data.length; index += 1) data[index] = Math.random() * 2 - 1;
   const source = audioContext.createBufferSource();
   const filter = audioContext.createBiquadFilter();
   const gain = audioContext.createGain();
-  source.buffer = buffer;
+  source.buffer = noiseBuffer;
   filter.type = 'bandpass'; filter.frequency.value = filterFrequency; filter.Q.value = 1.2;
   gain.gain.setValueAtTime(gainAmount, time); gain.gain.exponentialRampToValueAtTime(0.001, time + duration);
   source.connect(filter).connect(gain).connect(masterGain);
-  source.start(time); source.stop(time + duration);
+  source.start(time, Math.random() * (noiseBufferSeconds - duration), duration);
 }
 
 function playKey(keyType = 'normal') {
@@ -63,20 +72,38 @@ function pressVisual(keyName) {
   window.setTimeout(() => key.classList.remove('pressed'), 110);
 }
 
-document.querySelectorAll('.key').forEach((key) => key.addEventListener('click', () => {
+function playVirtualKey(key) {
   const type = key.dataset.key === 'SPACE' ? 'space' : key.dataset.key === 'SHIFT' ? 'shift' : 'normal';
   playKey(type); pressVisual(key.dataset.key);
-}));
+}
+
+document.querySelectorAll('.key').forEach((key) => {
+  // Pointer-down sounds immediately; keyboard activation still arrives as click.
+  key.addEventListener('pointerdown', () => playVirtualKey(key));
+  key.addEventListener('click', (event) => {
+    if (event.detail === 0) playVirtualKey(key);
+  });
+});
 
 document.addEventListener('keydown', (event) => {
-  if (event.repeat) return;
   const keyName = event.key === ' ' ? 'SPACE' : event.key.toUpperCase();
-  const allowed = ['Q','W','E','R','T','Y','U','I','O','P','A','S','D','F','G','H','J','K','L','Z','X','C','V','B','N','M','BACKSPACE','ENTER','SHIFT','SPACE'];
-  if (!allowed.includes(keyName)) return;
+  if (!allowedKeys.has(keyName)) return;
   event.preventDefault();
+  const keyId = event.code || keyName;
+  if (event.repeat || pressedKeys.has(keyId)) return;
+  pressedKeys.add(keyId);
   const type = keyName === 'SPACE' ? 'space' : keyName === 'SHIFT' ? 'shift' : 'normal';
   playKey(type); pressVisual(keyName);
 });
+
+document.addEventListener('keyup', (event) => {
+  const keyName = event.key === ' ' ? 'SPACE' : event.key.toUpperCase();
+  if (!allowedKeys.has(keyName)) return;
+  event.preventDefault();
+  pressedKeys.delete(event.code || keyName);
+});
+
+window.addEventListener('blur', () => pressedKeys.clear());
 
 document.querySelectorAll('.sound-card').forEach((card) => card.addEventListener('click', () => {
   selectedSound = card.dataset.sound;

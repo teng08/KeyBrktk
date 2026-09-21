@@ -82,6 +82,26 @@ type keyEvent struct {
 	kind    int
 	release bool
 }
+
+// keyState turns Windows auto-repeat messages into one physical press cycle.
+type keyState [256]bool
+
+func (state *keyState) press(key uint32) bool {
+	if key >= uint32(len(state)) || state[key] {
+		return false
+	}
+	state[key] = true
+	return true
+}
+
+func (state *keyState) release(key uint32) bool {
+	if key >= uint32(len(state)) || !state[key] {
+		return false
+	}
+	state[key] = false
+	return true
+}
+
 type voice struct {
 	frames   []float32
 	position int

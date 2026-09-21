@@ -58,7 +58,8 @@ The listener is limited to the current interactive Windows desktop; sign-in,
 UAC's secure desktop and protected/elevated applications may not be observable.
 
 Enable **Floating counter follows my mouse** for the same small dark counter as
-on Mac. It shows the current sound, counts key-down events including repeats,
+on Mac. It shows the current sound and counts each key once per press/release
+cycle; holding a key does not repeat its sound or count,
 resets its typing window every three seconds, and collapses after an idle pause.
 It is click-through, never takes focus and stays within the cursor's monitor work
 area. Windows' animation preference disables pulsing and animated collapse.
