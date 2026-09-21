@@ -8,10 +8,10 @@ Prebuilt preview downloads are published in
 
 | Device | Download | Minimum system |
 | --- | --- | --- |
-| Intel Mac or Apple-silicon MacBook/Mac | [Download Mac app (.dmg)](https://github.com/teng08/KeyBrktk/releases/download/v3.6.1-preview.1/Keybed-macOS-universal.dmg) | macOS 11 |
-| Most Windows PCs (easy-to-share compatibility build) | [Download compatible Windows app (.exe)](https://github.com/teng08/KeyBrktk/releases/download/v3.6.1-preview.1/Keybed-Windows-compatible.exe) | Windows 10/11, 32- or 64-bit Intel/AMD |
-| Intel/AMD Windows PC | [Download native 64-bit Windows app (.exe)](https://github.com/teng08/KeyBrktk/releases/download/v3.6.1-preview.1/Keybed-Windows-x64.exe) | Windows 10/11 x64 |
-| Windows-on-ARM PC (experimental) | [Download Windows ARM app (.exe)](https://github.com/teng08/KeyBrktk/releases/download/v3.6.1-preview.1/Keybed-Windows-arm64.exe) | Windows 11 |
+| Intel Mac or Apple-silicon MacBook/Mac | [Download Mac app (.dmg)](https://github.com/teng08/KeyBrktk/releases/download/v3.6.1-preview.2/Keybed-macOS-universal.dmg) | macOS 11 |
+| Most Windows PCs (easy-to-share compatibility build) | [Download compatible Windows app (.exe)](https://github.com/teng08/KeyBrktk/releases/download/v3.6.1-preview.2/Keybed-Windows-compatible.exe) | Windows 10/11, 32- or 64-bit Intel/AMD |
+| Intel/AMD Windows PC | [Download native 64-bit Windows app (.exe)](https://github.com/teng08/KeyBrktk/releases/download/v3.6.1-preview.2/Keybed-Windows-x64.exe) | Windows 10/11 x64 |
+| Windows-on-ARM PC (experimental) | [Download Windows ARM app (.exe)](https://github.com/teng08/KeyBrktk/releases/download/v3.6.1-preview.2/Keybed-Windows-arm64.exe) | Windows 11 |
 
 The Mac binary contains both `x86_64` and `arm64`, so Apple-silicon MacBooks run
 natively without Rosetta. **Mac:** open the DMG, drag Keybed onto Applications,
